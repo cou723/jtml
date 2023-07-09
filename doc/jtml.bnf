@@ -1,17 +1,10 @@
-<program> ::= <statement> | <program> <statements>
-
+<program> ::= <statements>
 <statements> ::= <statement> | <statements> <statement>
-
-<statement> ::= <element_name> <attribute> <value> | <string>
-
+<value> ::= '{' <statements> '}'
+<statement> ::= <element-name> <attribute> <value> | <string>
 <element-name> ::= 'html'|'div'|'head'|'body'|'title'|'p'|'h1'|'h2'|'h3'|'h4'|'h5'|'h6'|'ul'|'ol'|'li'|'a'|'img'|'span'|'br'|'hr'|'script'|'link'|'meta'|'style'|'table'|'tr'|'td'|'th'|'thead'|'tbody'|'tfoot'|'form'|'input'|'button'|'select'|'option'|'textarea'|'label'|'fieldset'|'legend'|'iframe'|'canvas'|'audio'|'video'|'source'|'nav'|'header'|'footer'|'section'|'article'|'aside'|'details'|'summary'|'figure'|'figcaption'|'mark'|'time'|'progress'|'meter'|'ruby'|'rt'|'rp'|'bdi'|'wbr'|'bdo'|'q'|'blockquote'|'cite'|'abbr'|'address'|'em'|'strong'|'small'|'s'|'cite'|'code'|'samp'|'kbd'|'var'|'sub'|'sup'|'i'|'b'|'u'|'tt'|'strike'|'big'|'pre'|'center'|'font'|'basefont'|'dir'|'menu'|'applet'|'object'|'param'|'embed'|'map'|'area'|'frame'|'frameset'|'noframes'|'iframe'|'del'|'ins'|'caption'|'col'|'colgroup'|'optgroup'|'thead'|'tbody'|'tfoot'|'tr'|'td'|'th'|'button'|'datalist'|'keygen'|'output'|'progress'|'meter'|'details'|'summary'|'command'|'menuitem'|'dialog'|'legend'|'fieldset'|'label'|'optgroup'|'option'|'textarea'|'input'|'select'|'button'|'form'|'style'|'script'|'noscript'|'template'|'slot'|'canvas'|'svg'|'math'|'audio'|'video'|'source'|'track'|'embed'|'object'|'param'|'iframe'|'frame'|'frameset'|'img'|'map'|'area'|'picture'|'source'|'track'|'embed'|'object'|'param'|'iframe'
-
-<attribute> ::= '(', string, '=', string, ')'
-
-<value> = '{' <statements> '}'
-
-<string> ::= <letter> | <letter><string>
-
+<attribute> ::= '(' <string> '=' <string> ')'
+<string> ::= <letter> | <letter> <string>
 <letter> ::= 'a' | 'b' | 'c' | 'd' | 'e' | 'f' |
              'g' | 'h' | 'i' | 'j' | 'k' | 'l' |
              'm' | 'n' | 'o' | 'p' | 'q' | 'r' |
