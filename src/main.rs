@@ -1,4 +1,5 @@
 use bnf::Grammar;
+use bnf::ParseTreeNode;
 use std::fs;
 use std::io;
 use std::io::Write;
@@ -10,8 +11,8 @@ struct Cli {
     filenames: Vec<String>,
 }
 
-fn compile(text: String) -> String {
-    let bnf =
+fn parse(text:&'static str) -> Result<bnf::ParseTree<'static>, bnf::Error> {
+    let bnf:&'static str=
     "<program> ::= <statements>
     <statements> ::= <statement> | <statements> <statement>
     <value> ::= '{' <statements> '}'
@@ -32,16 +33,21 @@ fn compile(text: String) -> String {
                  'Y' | 'Z'
     ";
     let grammar: Grammar = bnf.parse().expect("Failed to parse grammar");
-    let sentence = grammar.generate();
-match sentence {
-    Ok(s) => println!("random sentence: {}", s),
-    Err(e) => println!("something went wrong: {}!", e)
-}
-    let mut parse_trees = grammar.parse_input("p(){summary(drbr){\"agvuPc\"}}");
+    let mut parse_trees = grammar.parse_input(text);
     match parse_trees.next() {
-        Some(parse_tree) => println!("{}", parse_tree),
-        _ => println!("Grammar could not parse sentence"),
+        Some(parse_tree) => Ok(parse_tree),
+        _ => Err(bnf::Error::ParseError("Failed to parse input".to_string())),
     }
+}
+//     let sentence = grammar.generate();
+// match sentence {
+//     Ok(s) => println!("random sentence: {}", s),
+//     Err(e) => println!("something went wrong: {}!", e)
+// }
+
+fn compile(text: String) -> String {
+    let mut vec: Vec<&ParseTreeNode>;
+
     "hoge".to_string()
 }
 
