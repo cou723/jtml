@@ -1,7 +1,7 @@
-use bnf::Grammar;
-use bnf::ParseTreeNode;
+mod converter;
+mod get_bnf;
+use bnf;
 use std::fs;
-use std::io;
 use std::io::Write;
 use std::path::Path;
 use structopt::StructOpt;
@@ -11,47 +11,7 @@ struct Cli {
     filenames: Vec<String>,
 }
 
-fn parse(text:&'static str) -> Result<bnf::ParseTree<'static>, bnf::Error> {
-    let bnf:&'static str=
-    "<program> ::= <statements>
-    <statements> ::= <statement> | <statements> <statement>
-    <value> ::= '{' <statements> '}'
-    <statement> ::= <element-name> <attributes> <value> | '\"' <string> '\"'
-    <element-name> ::= 'html'|'div'|'head'|'body'|'title'|'p'|'h1'|'h2'|'h3'|'h4'|'h5'|'h6'|'ul'|'ol'|'li'|'a'|'img'|'span'|'br'|'hr'|'script'|'link'|'meta'|'style'|'table'|'tr'|'td'|'th'|'thead'|'tbody'|'tfoot'|'form'|'input'|'button'|'select'|'option'|'textarea'|'label'|'fieldset'|'legend'|'iframe'|'canvas'|'audio'|'video'|'source'|'nav'|'header'|'footer'|'section'|'article'|'aside'|'details'|'summary'|'figure'|'figcaption'|'mark'|'time'|'progress'|'meter'|'ruby'|'rt'|'rp'|'bdi'|'wbr'|'bdo'|'q'|'blockquote'|'cite'|'abbr'|'address'|'em'|'strong'|'small'|'s'|'cite'|'code'|'samp'|'kbd'|'var'|'sub'|'sup'|'i'|'b'|'u'|'tt'|'strike'|'big'|'pre'|'center'|'font'|'basefont'|'dir'|'menu'|'applet'|'object'|'param'|'embed'|'map'|'area'|'frame'|'frameset'|'noframes'|'iframe'|'del'|'ins'|'caption'|'col'|'colgroup'|'optgroup'|'thead'|'tbody'|'tfoot'|'tr'|'td'|'th'|'button'|'datalist'|'keygen'|'output'|'progress'|'meter'|'details'|'summary'|'command'|'menuitem'|'dialog'|'legend'|'fieldset'|'label'|'optgroup'|'option'|'textarea'|'input'|'select'|'button'|'form'|'style'|'script'|'noscript'|'template'|'slot'|'canvas'|'svg'|'math'|'audio'|'video'|'source'|'track'|'embed'|'object'|'param'|'iframe'|'frame'|'frameset'|'img'|'map'|'area'|'picture'|'source'|'track'|'embed'|'object'|'param'|'iframe'
-    <attributes> ::= '()' | '(' <attribute> ')' | '(' <attributes> ' ' <attribute> ')'
-    <attribute> ::= <string> '=' <string> | <string>
-    <string> ::= <letter> | <letter> <string>
-    <letter> ::= 'a' | 'b' | 'c' | 'd' | 'e' | 'f' |
-                 'g' | 'h' | 'i' | 'j' | 'k' | 'l' |
-                 'm' | 'n' | 'o' | 'p' | 'q' | 'r' |
-                 's' | 't' | 'u' | 'v' | 'w' | 'x' |
-                 'y' | 'z' |
-                 'A' | 'B' | 'C' | 'D' | 'E' | 'F' |
-                 'G' | 'H' | 'I' | 'J' | 'K' | 'L' |
-                 'M' | 'N' | 'O' | 'P' | 'Q' | 'R' |
-                 'S' | 'T' | 'U' | 'V' | 'W'|  'X'|
-                 'Y' | 'Z'
-    ";
-    let grammar: Grammar = bnf.parse().expect("Failed to parse grammar");
-    let mut parse_trees = grammar.parse_input(text);
-    match parse_trees.next() {
-        Some(parse_tree) => Ok(parse_tree),
-        _ => Err(bnf::Error::ParseError("Failed to parse input".to_string())),
-    }
-}
-//     let sentence = grammar.generate();
-// match sentence {
-//     Ok(s) => println!("random sentence: {}", s),
-//     Err(e) => println!("something went wrong: {}!", e)
-// }
-
-fn compile(text: String) -> String {
-    let mut vec: Vec<&ParseTreeNode>;
-
-    "hoge".to_string()
-}
-
-fn main() -> Result<(), io::Error> {
+fn main() -> Result<(), anyhow::Error> {
     let args = Cli::from_args();
     let filenames = args.filenames;
     for filename in filenames {
@@ -79,7 +39,18 @@ fn main() -> Result<(), io::Error> {
                 continue;
             }
         };
-        file.write(compiled.as_bytes()).unwrap();
+        file.write(compiled?.as_bytes())?;
     }
     Ok(())
+}
+
+
+fn compile(text: String) -> Result<String, converter::CompileError> {
+    let grammar: Box<bnf::Grammar> = Box::new(get_bnf::get_bnf().parse().expect("Failed to parse grammar"));
+    let mut parse_trees = grammar.parse_input(text.as_str());
+    let parse_tree = match parse_trees.next() {
+        Some(parse_tree) => parse_tree,
+        _ => return Err(converter::CompileError::ParseError),
+    };
+    converter::convert_elements(&parse_tree)
 }
