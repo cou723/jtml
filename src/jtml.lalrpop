@@ -1,0 +1,65 @@
+grammar;
+pub Document:String = <es:Elements> => es;
+
+Elements:String = {
+    Element => <>,
+    Elements Element => format("{} {}",<>),
+};
+
+Value:String = "{" Elements "}" => "{" + <> + "}";
+
+Element:String = {
+    <en:ID> <ea:ElementAttribute> <v:Value> => en + ea + v ,
+    Text => <>
+};
+
+ElementAttribute:String = "(" Attributes ")" => "(" + <> + ")";
+
+Attributes:String = {
+    Attributes Attribute => format!("{} {}",<>),
+    Attribute => <>
+};
+
+Attribute:String = {
+    ID "=" Text => format!("{}={}",<>),
+    ID "=" Number => format!("{}={}",<>),
+    ID => <>
+};
+
+match {
+    "html",
+    "div",
+    "head",
+    "body",
+    "title",
+    "p",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "ul",
+    "ol",
+    "li",
+    "a",
+    "img",
+    "span",
+    "br",
+    "hr",
+    "script",
+    "link",
+    "meta",
+    "style",
+    "{",
+    "}",
+    "(",
+     ")",
+    "=",
+} else {
+    r#"".*""# => Text ,
+}else{
+    r"[A-Za-z]+" => ID,
+}else{
+    r"[0-9]+" => Number,
+}
