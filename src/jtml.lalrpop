@@ -3,27 +3,27 @@ pub Document:String = <es:Elements> => es;
 
 Elements:String = {
     Element => <>,
-    Elements Element => format("{} {}",<>),
+    Elements Element => format!("{} {}",<>),
 };
 
-Value:String = "{" Elements "}" => "{" + <> + "}";
+Value:String = "{" <es:Elements> "}" => format!("{{ {} }}",es);
 
 Element:String = {
-    <en:ID> <ea:ElementAttribute> <v:Value> => en + ea + v ,
-    Text => <>
+    <en:ID> <ea:ElementAttribute> <v:Value> =>  format!("{}{}{}", en , ea , v) ,
+    Text => <>.to_string()
 };
 
-ElementAttribute:String = "(" Attributes ")" => "(" + <> + ")";
+ElementAttribute:String = "(" <a:Attributes> ")" => format!("({})",a);
 
 Attributes:String = {
-    Attributes Attribute => format!("{} {}",<>),
-    Attribute => <>
+    <asa:Attributes> <a:Attribute> => format!("{} {}",asa,a),
+    Attribute => <>.to_string()
 };
 
 Attribute:String = {
-    ID "=" Text => format!("{}={}",<>),
-    ID "=" Number => format!("{}={}",<>),
-    ID => <>
+    <i:ID> "=" <t:Text> => format!("{}={}",i,t),
+    <i:ID> "=" <n:Number> => format!("{}={}",i,n),
+    ID => <>.to_string()
 };
 
 match {

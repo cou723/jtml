@@ -1,6 +1,13 @@
-mod converter;
-mod get_bnf;
-use bnf;
+use lalrpop_util::lalrpop_mod;
+macro_rules! lalrpop_mod_doc {
+    ($vis:vis $name:ident) => {
+        lalrpop_util::lalrpop_mod!(
+            #[allow(clippy::ptr_arg)]
+            #[allow(clippy::vec_box)]
+            $vis $name);
+    }
+}
+lalrpop_mod_doc!(pub jtml);
 use std::fs;
 use std::io::Write;
 use std::path::Path;
@@ -29,28 +36,34 @@ fn main() -> Result<(), anyhow::Error> {
             }
         };
         // compile
-        let compiled = compile(file_text);
-
-        // write to file
-        let mut file = match fs::File::create(Path::new(&filename).with_extension("html")) {
-            Ok(file) => file,
-            Err(_) => {
-                eprintln!("Error creating file {}", filename);
-                continue;
-            }
-        };
-        file.write(compiled?.as_bytes())?;
+        // let compiled = compile(file_text);
+        // let compiled = Ok("test");
+        // // write to file
+        // let mut file = match fs::File::create(Path::new(&filename).with_extension("html")) {
+        //     Ok(file) => file,
+        //     Err(_) => {
+        //         eprintln!("Error creating file {}", filename);
+        //         continue;
+        //     }
+        // };
+        // file.write(compiled?.as_bytes())?;
     }
     Ok(())
 }
 
 
-fn compile(text: String) -> Result<String, converter::CompileError> {
-    let grammar: Box<bnf::Grammar> = Box::new(get_bnf::get_bnf().parse().expect("Failed to parse grammar"));
-    let mut parse_trees = grammar.parse_input(text.as_str());
-    let parse_tree = match parse_trees.next() {
-        Some(parse_tree) => parse_tree,
-        _ => return Err(converter::CompileError::ParseError),
-    };
-    converter::convert_elements(&parse_tree)
+// fn compile(text: String) -> Result<String, converter::CompileError> {
+//     let grammar: Box<bnf::Grammar> = Box::new(get_bnf::get_bnf().parse().expect("Failed to parse grammar"));
+//     let mut parse_trees = grammar.parse_input(text.as_str());
+//     let parse_tree = match parse_trees.next() {
+//         Some(parse_tree) => parse_tree,
+//         _ => return Err(converter::CompileError::ParseError),
+//     };
+//     converter::convert_elements(&parse_tree)
+// }
+
+
+#[test]
+fn parser (){
+    assert!(jtml::TermParser::new().parse("hello").is_ok());
 }
