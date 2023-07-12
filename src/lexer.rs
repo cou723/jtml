@@ -1,6 +1,6 @@
-use std::sync::Arc;
+use std::fmt;
 
-#[derive(Debug, Clone, PartialEq, Display)]
+#[derive(Debug,Clone, PartialEq)]
 pub enum Token {
     Text(String),
     LeftBracket,
@@ -11,6 +11,37 @@ pub enum Token {
     Comma,
     Id(String),
 }
+
+// impl Clone for Token {
+//     fn clone(&self) -> Self {
+//         match self {
+//             Token::Text(string) => Token::Text(string.clone()),
+//             Token::LeftBracket => Token::LeftBracket,
+//             Token::RightBracket => Token::RightBracket,
+//             Token::LeftBrace => Token::LeftBrace,
+//             Token::RightBrace => Token::RightBrace,
+//             Token::Equal => Token::Equal,
+//             Token::Comma => Token::Comma,
+//             Token::Id(string) => Token::Id(string.clone()),
+//         }
+//     }
+// }
+
+impl fmt::Display for Token {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Token::Text(_string) => write!(f, "Text({})", self),
+            Token::LeftBracket => write!(f, "LeftBracket"),
+            Token::RightBracket => write!(f, "RightBracket"),
+            Token::LeftBrace => write!(f, "LeftBrace"),
+            Token::RightBrace => write!(f, "RightBrace"),
+            Token::Equal => write!(f, "Equal"),
+            Token::Comma => write!(f, "Comma"),
+            Token::Id(_string) => write!(f, "Id({})", self),
+        }
+    }
+}
+
 #[derive(PartialEq, Debug)]
 enum State {
     Text,
@@ -19,7 +50,7 @@ enum State {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-enum LexerError {
+pub enum LexerError {
     UnexpectedToken(String),
 }
 pub fn lexer(text: String) -> Result<Vec<Token>, LexerError> {
@@ -65,28 +96,27 @@ pub fn lexer(text: String) -> Result<Vec<Token>, LexerError> {
                 }
             }
         } else {
-                if c.unwrap() == '"' {
-                    buffer.push('"');
-                    result.push(Token::Text(buffer.clone()));
-                    state = State::Other;
-                    buffer.clear();
-                }
-                else if c.unwrap() == '\\' {
-                    match chars.next() {
-                        Some(c) => {
-                            if c == '"' {
-                                buffer.push(c);
-                            };
-                        }
-                        None => buffer.push('\\'),
-                    };
-                }else{
-                    buffer.push(c.unwrap());
-                }
+            if c.unwrap() == '"' {
+                buffer.push('"');
+                result.push(Token::Text(buffer.clone()));
+                state = State::Other;
+                buffer.clear();
+            } else if c.unwrap() == '\\' {
+                match chars.next() {
+                    Some(c) => {
+                        if c == '"' {
+                            buffer.push(c);
+                        };
+                    }
+                    None => buffer.push('\\'),
+                };
+            } else {
+                buffer.push(c.unwrap());
+            }
         }
         c = chars.next();
     }
-    if state==State::Id {
+    if state == State::Id {
         result.push(Token::Id(buffer.clone()));
     }
     Ok(result)
@@ -133,7 +163,7 @@ fn test_lexer() {
         ]
     );
     assert_eq!(
-        lexer("p(color=\"red\"){\"hello world!\"}".to_string()).unwrap(),
+        lexer(r#"p(color="red"){"hello world!"}"#.to_string()).unwrap(),
         vec![
             Token::Id("p".to_string()),
             Token::LeftBracket,
