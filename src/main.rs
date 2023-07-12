@@ -1,15 +1,6 @@
-use lalrpop_util::lalrpop_mod;
-macro_rules! lalrpop_mod_doc {
-    ($vis:vis $name:ident) => {
-        lalrpop_util::lalrpop_mod!(
-            #[allow(clippy::ptr_arg)]
-            #[allow(clippy::vec_box)]
-            $vis $name);
-    }
-}
-lalrpop_mod_doc!(pub jtml);
+mod lexer;
 use std::fs;
-use std::io::Write;
+use lexer;
 use std::path::Path;
 use structopt::StructOpt;
 #[derive(StructOpt)]
@@ -51,19 +42,66 @@ fn main() -> Result<(), anyhow::Error> {
     Ok(())
 }
 
+struct Node{
+    tag: String,
+    attributes: Vec<(String,String)>,
+    children: Vec<Node>,
+}
 
-// fn compile(text: String) -> Result<String, converter::CompileError> {
-//     let grammar: Box<bnf::Grammar> = Box::new(get_bnf::get_bnf().parse().expect("Failed to parse grammar"));
-//     let mut parse_trees = grammar.parse_input(text.as_str());
-//     let parse_tree = match parse_trees.next() {
-//         Some(parse_tree) => parse_tree,
-//         _ => return Err(converter::CompileError::ParseError),
-//     };
-//     converter::convert_elements(&parse_tree)
-// }
+enum ParserError{
+    UnexpectedToken(String),
+}
 
+fn parser(tokens:lexer::Token) -> Result<Node,ParserError>{
+    document(tokens)
+}
 
-#[test]
-fn parser (){
-    assert!(jtml::TermParser::new().parse("hello").is_ok());
+fn document(tokens:lexer::Token) -> Result<Node,ParserError>{
+    let mut node=Node{
+        tag: tokens.pop().unwrap().to_string(),
+        attributes: attributes(tokens)?,
+        children: Vec::new(),
+    };
+    while(tokens.len() != 0){
+        let (node,rest) = element(tokens)?;
+        tokens = rest;
+    }
+}
+
+fn attributes(tokens:lexer::Token) -> Result<Vec<(String,String)>,ParserError>{
+    let mut attributes:Vec<(String,String)> = Vec::new();
+    while(tokens.len() != 0){
+        let (attribute,rest) = attribute(tokens)?;
+        attributes.push(attribute);
+        tokens = rest;
+    }
+    Ok(attributes)
+}
+
+fn attribute(mut tokens:&Vec<lexer::Token>) -> Result<(String,String),ParserError>{
+    let mut key:String;
+    let mut value:String;
+    if let lexer::Token::Id(_key) = tokens[0]{
+        key=_key;
+        tokens.pop();
+    }else{
+        return Err(ParserError::UnexpectedToken(tokens[0].to_string()));
+    }
+    if let lexer::Token::Equal = tokens[1]{
+    }else {
+        return Err(ParserError::UnexpectedToken(tokens[1].to_string()));
+    }
+    if let lexer::Token::Text(_value) = tokens[2]{
+        value=_value;
+        tokens.pop();
+    }else{
+        return Err(ParserError:UnexpectedToken(tokens[2].to_string()));
+    }
+    Ok((key,value))
+
+}
+
+fn compile(text: String) -> Result<String, converter::CompileError> {
+    let tokens = lexer::lexer(text);
+
 }

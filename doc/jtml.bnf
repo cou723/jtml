@@ -1,11 +1,11 @@
 <document> ::= <elements>
 <elements> ::= <element> | <elements> <element>
 <value> ::= '{' <elements> '}'
-<element> ::= <element-name> <attributes> <value> | <string>
-<element-name> ::= 'html'|'div'|'head'|'body'|'title'|'p'|'h1'|'h2'|'h3'|'h4'|'h5'|'h6'|'ul'|'ol'|'li'|'a'|'img'|'span'|'br'|'hr'|'script'|'link'|'meta'|'style'|'table'|'tr'|'td'|'th'|'thead'|'tbody'|'tfoot'|'form'|'input'|'button'|'select'|'option'|'textarea'|'label'|'fieldset'|'legend'|'iframe'|'canvas'|'audio'|'video'|'source'|'nav'|'header'|'footer'|'section'|'article'|'aside'|'details'|'summary'|'figure'|'figcaption'|'mark'|'time'|'progress'|'meter'|'ruby'|'rt'|'rp'|'bdi'|'wbr'|'bdo'|'q'|'blockquote'|'cite'|'abbr'|'address'|'em'|'strong'|'small'|'s'|'cite'|'code'|'samp'|'kbd'|'var'|'sub'|'sup'|'i'|'b'|'u'|'tt'|'strike'|'big'|'pre'|'center'|'font'|'basefont'|'dir'|'menu'|'applet'|'object'|'param'|'embed'|'map'|'area'|'frame'|'frameset'|'noframes'|'iframe'|'del'|'ins'|'caption'|'col'|'colgroup'|'optgroup'|'thead'|'tbody'|'tfoot'|'tr'|'td'|'th'|'button'|'datalist'|'keygen'|'output'|'progress'|'meter'|'details'|'summary'|'command'|'menuitem'|'dialog'|'legend'|'fieldset'|'label'|'optgroup'|'option'|'textarea'|'input'|'select'|'button'|'form'|'style'|'script'|'noscript'|'template'|'slot'|'canvas'|'svg'|'math'|'audio'|'video'|'source'|'track'|'embed'|'object'|'param'|'iframe'|'frame'|'frameset'|'img'|'map'|'area'|'picture'|'source'|'track'|'embed'|'object'|'param'|'iframe'
+<element> ::= <id> <attributes> <value> | <text>
 <attributes> ::= '(' <attribute> ')' | '(' <attributes> ' ' <attribute> ')'
-<attribute> ::= <string> '=' <string> | <string> '=' <number>
-<string> ::= <letter> | <letter> <string>
+<attribute> ::= <id> '=' <text>
+<text> :: = '"' <text> '"'
+<id> ::= <letter> | <letter> <id>
 <letter> ::= 'a' | 'b' | 'c' | 'd' | 'e' | 'f' |
              'g' | 'h' | 'i' | 'j' | 'k' | 'l' |
              'm' | 'n' | 'o' | 'p' | 'q' | 'r' |
@@ -15,7 +15,6 @@
              'G' | 'H' | 'I' | 'J' | 'K' | 'L' |
              'M' | 'N' | 'O' | 'P' | 'Q' | 'R' |
              'S' | 'T' | 'U' | 'V' | 'W'|  'X'|
-             'Y' | 'Z'
-<number> ::= <digit> | <digit> <number>
-<digit> ::= '0' | '1' | '2' | '3' | '4' | '5' |
-            '6' | '7' | '8' | '9'
+             'Y' | 'Z'|
+             '0' | '1' | '2' | '3' | '4' | '5' |
+             '6' | '7' | '8' | '9'
