@@ -12,21 +12,6 @@ pub enum Token {
     Id(String),
 }
 
-// impl Clone for Token {
-//     fn clone(&self) -> Self {
-//         match self {
-//             Token::Text(string) => Token::Text(string.clone()),
-//             Token::LeftBracket => Token::LeftBracket,
-//             Token::RightBracket => Token::RightBracket,
-//             Token::LeftBrace => Token::LeftBrace,
-//             Token::RightBrace => Token::RightBrace,
-//             Token::Equal => Token::Equal,
-//             Token::Comma => Token::Comma,
-//             Token::Id(string) => Token::Id(string.clone()),
-//         }
-//     }
-// }
-
 impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {

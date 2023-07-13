@@ -23,11 +23,15 @@ pub enum ParserError {
     TokenIsNotEnough(lexer::Token),
 }
 
-impl Display for ParserError{
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result{
-        match self{
-            ParserError::UnexpectedToken(expect, actual) => write!(f, "Unexpected token: expect {}, actual {}", expect, actual),
-            ParserError::TokenIsNotEnough(expect) => write!(f, "Token is not enough: expect {}", expect),
+impl Display for ParserError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            ParserError::UnexpectedToken(expect, actual) => {
+                write!(f, "Unexpected token: expect {}, actual {}", expect, actual)
+            }
+            ParserError::TokenIsNotEnough(expect) => {
+                write!(f, "Token is not enough: expect {}", expect)
+            }
         }
     }
 }
@@ -39,15 +43,26 @@ struct Element {
     children: VecDeque<Child>,
 }
 
-impl Element{
-    fn to_html(&self) -> String{
+impl Element {
+    fn to_html(&self) -> String {
+        let empty_elements = vec![
+            "br", "hr", "img", "input", "meta", "area", "base", "col", "embed", "keygen", "link",
+            "param", "source",
+        ];
         let mut html = String::new();
         html.push_str(&format!("<{}", self.element_name));
-        for (key, value) in &self.attributes{
+        if empty_elements.contains(&self.element_name.as_str()) {
+            for (key, value) in &self.attributes {
+                html.push_str(&format!(" {}={}", key, value));
+            }
+            html.push_str(">");
+            return html;
+        }
+        for (key, value) in &self.attributes {
             html.push_str(&format!(" {}={}", key, value));
         }
         html.push_str(">");
-        for child in &self.children{
+        for child in &self.children {
             html.push_str(&child.to_html());
         }
         html.push_str(&format!("</{}>", self.element_name));
@@ -61,9 +76,9 @@ enum Child {
     Text(String),
 }
 
-impl Child{
-    fn to_html(&self)->String{
-        match self{
+impl Child {
+    fn to_html(&self) -> String {
+        match self {
             Child::Element(element) => element.to_html(),
             Child::Text(text) => text.clone().trim_matches('"').to_string(),
         }

@@ -9,6 +9,7 @@ html(lang="ja"){
         main(){
             h1(){"Hello World!"}
             p(){"こんにちは"}
+            img(hoge="hoge" huga="huga"){}
         }
     }
 }
