@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::{collections::VecDeque, fmt::Display};
 
 use crate::lexer;
 
@@ -7,10 +7,29 @@ pub struct Document {
     elements: VecDeque<Child>,
 }
 
+impl Document {
+    pub fn to_html(&self) -> String {
+        let mut html = String::new();
+        for element in &self.elements {
+            html.push_str(&element.to_html());
+        }
+        html
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum ParserError {
     UnexpectedToken(lexer::Token, String),
     TokenIsNotEnough(lexer::Token),
+}
+
+impl Display for ParserError{
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result{
+        match self{
+            ParserError::UnexpectedToken(expect, actual) => write!(f, "Unexpected token: expect {}, actual {}", expect, actual),
+            ParserError::TokenIsNotEnough(expect) => write!(f, "Token is not enough: expect {}", expect),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -20,10 +39,35 @@ struct Element {
     children: VecDeque<Child>,
 }
 
+impl Element{
+    fn to_html(&self) -> String{
+        let mut html = String::new();
+        html.push_str(&format!("<{}", self.element_name));
+        for (key, value) in &self.attributes{
+            html.push_str(&format!(" {}={}", key, value));
+        }
+        html.push_str(">");
+        for child in &self.children{
+            html.push_str(&child.to_html());
+        }
+        html.push_str(&format!("</{}>", self.element_name));
+        html
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 enum Child {
     Element(Element),
     Text(String),
+}
+
+impl Child{
+    fn to_html(&self)->String{
+        match self{
+            Child::Element(element) => element.to_html(),
+            Child::Text(text) => text.clone().trim_matches('"').to_string(),
+        }
+    }
 }
 
 pub fn parser(tokens: &mut VecDeque<lexer::Token>) -> Result<Document, ParserError> {

@@ -67,7 +67,9 @@ fn compile(text: String) -> Result<String, CompileError> {
         Err(e) => return Err(CompileError::UnexpectedToken(e.to_string())),
     };
 
-    let ast = parser::parser(&mut tokens);
-    println!("{:?}", ast);
-    Ok("hoge".to_string())
+    let ast = match parser::parser(&mut tokens){
+        Ok(ast) => ast,
+        Err(e) => return Err(CompileError::UnexpectedToken(e.to_string())),
+    };
+    Ok(ast.to_html())
 }

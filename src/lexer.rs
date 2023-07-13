@@ -90,7 +90,7 @@ pub fn lexer(text: String) -> Result<Vec<Token>, LexerError> {
                 buffer.push(c.unwrap());
             }
         } else {
-            if state == State::Id && !c.unwrap().is_alphanumeric() {
+            if state == State::Id && !is_id_char(c.unwrap()) {
                 result.push(Token::Id(buffer.clone()));
                 buffer.clear();
                 state = State::Other;
@@ -113,7 +113,7 @@ pub fn lexer(text: String) -> Result<Vec<Token>, LexerError> {
                         buffer.push('"');
                         state = State::Text;
                     }
-                    c if c.is_alphanumeric() => {
+                    c if is_id_char(c) => {
                         buffer.push(c);
                         state = State::Id;
                     }
@@ -133,11 +133,19 @@ pub fn lexer(text: String) -> Result<Vec<Token>, LexerError> {
     Ok(result)
 }
 
+fn is_id_char(c: char) -> bool {
+    c.is_alphanumeric() || c == '-'
+}
+
 #[test]
 fn test_lexer() {
     assert_eq!(
         lexer("id".to_string()).unwrap(),
         vec![Token::Id("id".to_string())]
+    );
+    assert_eq!(
+        lexer("i-d".to_string()).unwrap(),
+        vec![Token::Id("i-d".to_string())]
     );
     assert_eq!(
         lexer("\"text\"".to_string()).unwrap(),
