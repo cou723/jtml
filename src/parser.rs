@@ -104,9 +104,7 @@ fn attributes(
     let mut attributes: VecDeque<(String, String)> = VecDeque::new();
     loop {
         match attribute(tokens) {
-            Ok((key, value)) => {
-                attributes.push_back((key, value));
-            }
+            Ok((key, value)) => attributes.push_back((key, value)),
             Err(_e) => return Ok(attributes),
         }
     }
@@ -263,7 +261,8 @@ mod test {
 
     #[test]
     fn test_element_with_contents() {
-        let mut tokens = VecDeque::from(lexer::lexer(r#"p(){"hello""world"}"#.to_string()).unwrap());
+        let mut tokens =
+            VecDeque::from(lexer::lexer(r#"p(){"hello""world"}"#.to_string()).unwrap());
         println!("{:?}", tokens);
         let result = parser::element(&mut tokens);
         assert_eq!(
@@ -271,14 +270,19 @@ mod test {
             parser::Child::Element(Element {
                 element_name: "p".to_string(),
                 attributes: VecDeque::from(vec![]),
-                children: VecDeque::from(vec![parser::Child::Text("\"hello\"".to_string()), parser::Child::Text("\"world\"".to_string())])
+                children: VecDeque::from(vec![
+                    parser::Child::Text("\"hello\"".to_string()),
+                    parser::Child::Text("\"world\"".to_string())
+                ])
             })
         );
     }
 
     #[test]
     fn test_element_with_child_element() {
-        let mut tokens = VecDeque::from(lexer::lexer(r#"p(){p(){"test"}p(){"test1""test2"}}}"#.to_string()).unwrap());
+        let mut tokens = VecDeque::from(
+            lexer::lexer(r#"p(){p(){"test"}p(){"test1""test2"}}}"#.to_string()).unwrap(),
+        );
         println!("{:?}", tokens);
         let result = parser::element(&mut tokens);
         assert_eq!(
@@ -306,7 +310,7 @@ mod test {
     }
 
     #[test]
-    fn test_document(){
+    fn test_document() {
         let mut tokens = VecDeque::from(lexer::lexer(r#"h1(){}p(){}"#.to_string()).unwrap());
         println!("{:?}", tokens);
         let result = parser::document(&mut tokens);
