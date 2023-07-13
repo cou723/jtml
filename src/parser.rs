@@ -1,6 +1,8 @@
 use std::collections::VecDeque;
 
 use crate::lexer;
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Document {
     elements: VecDeque<Child>,
 }
@@ -39,7 +41,7 @@ fn elements(tokens: &mut VecDeque<lexer::Token>) -> Result<VecDeque<Child>, Pars
     loop {
         match element(tokens) {
             Ok(element) => {
-                elements.push_front(element);
+                elements.push_back(element);
             }
             Err(_e) => return Ok(elements),
         }
@@ -103,7 +105,7 @@ fn attributes(
     loop {
         match attribute(tokens) {
             Ok((key, value)) => {
-                attributes.push_front((key, value));
+                attributes.push_back((key, value));
             }
             Err(_e) => return Ok(attributes),
         }
@@ -188,6 +190,7 @@ mod test {
         assert_eq!(result.unwrap(), ("id".to_string(), "text".to_string()));
     }
 
+    #[test]
     fn test_attributes() {
         let mut tokens = VecDeque::from(vec![
             lexer::Token::Id("id".to_string()),
@@ -255,6 +258,74 @@ mod test {
                 attributes: VecDeque::from(vec![]),
                 children: VecDeque::from(vec![parser::Child::Text("\"hello\"".to_string())])
             })
+        );
+    }
+
+    #[test]
+    fn test_element_with_contents() {
+        let mut tokens = VecDeque::from(lexer::lexer(r#"p(){"hello""world"}"#.to_string()).unwrap());
+        println!("{:?}", tokens);
+        let result = parser::element(&mut tokens);
+        assert_eq!(
+            result.unwrap(),
+            parser::Child::Element(Element {
+                element_name: "p".to_string(),
+                attributes: VecDeque::from(vec![]),
+                children: VecDeque::from(vec![parser::Child::Text("\"hello\"".to_string()), parser::Child::Text("\"world\"".to_string())])
+            })
+        );
+    }
+
+    #[test]
+    fn test_element_with_child_element() {
+        let mut tokens = VecDeque::from(lexer::lexer(r#"p(){p(){"test"}p(){"test1""test2"}}}"#.to_string()).unwrap());
+        println!("{:?}", tokens);
+        let result = parser::element(&mut tokens);
+        assert_eq!(
+            result.unwrap(),
+            parser::Child::Element(Element {
+                element_name: "p".to_string(),
+                attributes: VecDeque::from(vec![]),
+                children: VecDeque::from(vec![
+                    parser::Child::Element(Element {
+                        element_name: "p".to_string(),
+                        attributes: VecDeque::from(vec![]),
+                        children: VecDeque::from(vec![parser::Child::Text("\"test\"".to_string())])
+                    }),
+                    parser::Child::Element(Element {
+                        element_name: "p".to_string(),
+                        attributes: VecDeque::from(vec![]),
+                        children: VecDeque::from(vec![
+                            parser::Child::Text("\"test1\"".to_string()),
+                            parser::Child::Text("\"test2\"".to_string())
+                        ])
+                    })
+                ])
+            })
+        );
+    }
+
+    #[test]
+    fn test_document(){
+        let mut tokens = VecDeque::from(lexer::lexer(r#"h1(){}p(){}"#.to_string()).unwrap());
+        println!("{:?}", tokens);
+        let result = parser::document(&mut tokens);
+        assert_eq!(
+            result.unwrap(),
+            parser::Document {
+                elements: VecDeque::from(vec![
+                    parser::Child::Element(Element {
+                        element_name: "h1".to_string(),
+                        attributes: VecDeque::from(vec![]),
+                        children: VecDeque::from(vec![])
+                    }),
+                    parser::Child::Element(Element {
+                        element_name: "p".to_string(),
+                        attributes: VecDeque::from(vec![]),
+                        children: VecDeque::from(vec![])
+                    })
+                ])
+            }
         );
     }
 }

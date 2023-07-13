@@ -1,6 +1,8 @@
 mod lexer;
 mod parser;
+use std::collections::VecDeque;
 use std::fs;
+use std::io::Write;
 use std::path::Path;
 use structopt::StructOpt;
 #[derive(StructOpt)]
@@ -27,28 +29,45 @@ fn main() -> Result<(), anyhow::Error> {
             }
         };
         // compile
-        // let compiled = compile(file_text);
-        // let compiled = Ok("test");
-        // // write to file
-        // let mut file = match fs::File::create(Path::new(&filename).with_extension("html")) {
-        //     Ok(file) => file,
-        //     Err(_) => {
-        //         eprintln!("Error creating file {}", filename);
-        //         continue;
-        //     }
-        // };
-        // file.write(compiled?.as_bytes())?;
+        let compiled = match compile(file_text){
+            Ok(compiled) => compiled,
+            Err(e) => {
+                eprintln!("Error compiling '{}' ({})", filename,e);
+                continue;
+            }
+        };
+        // write to file
+        let mut file = match fs::File::create(Path::new(&filename).with_extension("html")) {
+            Ok(file) => file,
+            Err(_) => {
+                eprintln!("Error creating file {}", filename);
+                continue;
+            }
+        };
+        file.write(compiled.as_bytes())?;
     }
     Ok(())
 }
-
-
 
 enum CompileError{
     UnexpectedToken(String),
 }
 
+impl std::fmt::Display for CompileError{
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result{
+        match self{
+            CompileError::UnexpectedToken(s) => write!(f, "Unexpected token: {}", s),
+        }
+    }
+}
+
 fn compile(text: String) -> Result<String, CompileError> {
-    let tokens = lexer::lexer(text);
+    let mut tokens = match lexer::lexer(text){
+        Ok(tokens) => VecDeque::from(tokens),
+        Err(e) => return Err(CompileError::UnexpectedToken(e.to_string())),
+    };
+
+    let ast = parser::parser(&mut tokens);
+    println!("{:?}", ast);
     Ok("hoge".to_string())
 }

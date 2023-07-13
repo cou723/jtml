@@ -1,6 +1,6 @@
 use std::fmt;
 
-#[derive(Debug,Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     Text(String),
     LeftBracket,
@@ -52,7 +52,18 @@ enum State {
 #[derive(Debug, Clone, PartialEq)]
 pub enum LexerError {
     UnexpectedToken(String),
+    InternalError(String),
 }
+
+impl fmt::Display for LexerError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            LexerError::UnexpectedToken(s) => write!(f, "Unexpected token: {}", s),
+            LexerError::InternalError(m) => write!(f, "Internal error: {}",m),
+        }
+    }
+}
+
 pub fn lexer(text: String) -> Result<Vec<Token>, LexerError> {
     let mut state: State = State::Other;
     let mut result: Vec<Token> = Vec::new();
@@ -60,7 +71,25 @@ pub fn lexer(text: String) -> Result<Vec<Token>, LexerError> {
     let mut chars = text.chars();
     let mut c = chars.next();
     while c.is_some() {
-        if state != State::Text {
+        if state == State::Text {
+            if c.unwrap() == '"' {
+                buffer.push('"');
+                result.push(Token::Text(buffer.clone()));
+                state = State::Other;
+                buffer.clear();
+            } else if c.unwrap() == '\\' {
+                match chars.next() {
+                    Some(c) => {
+                        if c == '"' {
+                            buffer.push(c);
+                        };
+                    }
+                    None => buffer.push('\\'),
+                };
+            } else {
+                buffer.push(c.unwrap());
+            }
+        } else {
             if state == State::Id && !c.unwrap().is_alphanumeric() {
                 result.push(Token::Id(buffer.clone()));
                 buffer.clear();
@@ -71,10 +100,6 @@ pub fn lexer(text: String) -> Result<Vec<Token>, LexerError> {
                     result.push(Token::Id(buffer.clone()));
                     buffer.clear();
                 }
-                if buffer.len() != 0 {
-                    eprintln!("buffer内に文字({})が残っています", buffer);
-                    buffer.clear();
-                };
                 state = State::Other;
             } else {
                 match c.unwrap() {
@@ -92,26 +117,12 @@ pub fn lexer(text: String) -> Result<Vec<Token>, LexerError> {
                         buffer.push(c);
                         state = State::Id;
                     }
-                    _ => eprintln!("invalid character {}", c.unwrap()),
-                }
-            }
-        } else {
-            if c.unwrap() == '"' {
-                buffer.push('"');
-                result.push(Token::Text(buffer.clone()));
-                state = State::Other;
-                buffer.clear();
-            } else if c.unwrap() == '\\' {
-                match chars.next() {
-                    Some(c) => {
-                        if c == '"' {
-                            buffer.push(c);
-                        };
+                    _ => {
+                        return Err(LexerError::UnexpectedToken(
+                            format!("invalid character {}",c.unwrap())
+                        ))
                     }
-                    None => buffer.push('\\'),
-                };
-            } else {
-                buffer.push(c.unwrap());
+                }
             }
         }
         c = chars.next();
