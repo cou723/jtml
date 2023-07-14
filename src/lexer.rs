@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, str::Chars};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
@@ -31,7 +31,7 @@ impl fmt::Display for Token {
 enum State {
     Text,
     Id,
-    Other,
+    Neutral,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -44,78 +44,114 @@ impl fmt::Display for LexerError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             LexerError::UnexpectedToken(s) => write!(f, "Unexpected token: {}", s),
-            LexerError::InternalError(m) => write!(f, "Internal error: {}",m),
+            LexerError::InternalError(m) => write!(f, "Internal error: {}", m),
         }
     }
 }
 
+struct LexerState {
+    state: State,
+    buffer: String,
+    result: Vec<Token>,
+}
+
 pub fn lexer(text: String) -> Result<Vec<Token>, LexerError> {
-    let mut state: State = State::Other;
-    let mut result: Vec<Token> = Vec::new();
-    let mut buffer = String::new();
-    let mut chars = text.chars();
-    let mut c = chars.next();
+    let mut states = LexerState {
+        state: State::Neutral,
+        buffer: String::new(),
+        result: Vec::new(),
+    };
+    let mut untreated = text.chars();
+    let mut c = untreated.next();
     while c.is_some() {
-        if state == State::Text {
-            if c.unwrap() == '"' {
-                buffer.push('"');
-                result.push(Token::Text(buffer.clone()));
-                state = State::Other;
-                buffer.clear();
-            } else if c.unwrap() == '\\' {
-                match chars.next() {
-                    Some(c) => {
-                        if c == '"' {
-                            buffer.push(c);
-                        };
-                    }
-                    None => buffer.push('\\'),
-                };
-            } else {
-                buffer.push(c.unwrap());
-            }
-        } else {
-            if state == State::Id && !is_id_char(c.unwrap()) {
-                result.push(Token::Id(buffer.clone()));
-                buffer.clear();
-                state = State::Other;
-            }
-            if c.unwrap().is_whitespace() {
-                if state == State::Id {
-                    result.push(Token::Id(buffer.clone()));
-                    buffer.clear();
-                }
-                state = State::Other;
-            } else {
-                match c.unwrap() {
-                    '{' => result.push(Token::LeftBrace),
-                    '}' => result.push(Token::RightBrace),
-                    '(' => result.push(Token::LeftBracket),
-                    ')' => result.push(Token::RightBracket),
-                    '=' => result.push(Token::Equal),
-                    ',' => result.push(Token::Comma),
-                    '"' => {
-                        buffer.push('"');
-                        state = State::Text;
-                    }
-                    c if is_id_char(c) => {
-                        buffer.push(c);
-                        state = State::Id;
-                    }
-                    _ => {
-                        return Err(LexerError::UnexpectedToken(
-                            format!("invalid character {}",c.unwrap())
-                        ))
-                    }
-                }
-            }
+        if states.state == State::Text {
+            // textの場合の処理
+            text_lexer(c.unwrap(), &mut states, &mut untreated);
+            c = untreated.next();
+            continue;
         }
-        c = chars.next();
+        // idが終了する場合は終了させる
+        try_end_id(c.unwrap(), &mut states);
+        if c.unwrap().is_whitespace() {
+            states.state = State::Neutral;
+            c = untreated.next();
+            continue;
+            // Other状態で読み込んでいるときの処理
+        }
+        neutral_character_lexer(c.unwrap(), &mut states)?;
+
+        c = untreated.next();
     }
-    if state == State::Id {
-        result.push(Token::Id(buffer.clone()));
+    if states.state == State::Id {
+        states.result.push(Token::Id(states.buffer.clone()));
     }
-    Ok(result)
+    Ok(states.result)
+}
+
+fn text_lexer(c: char, lexer_state: &mut LexerState, untreated: &mut Chars) -> () {
+    if c == '"' {
+        end_text(
+            &mut lexer_state.buffer,
+            &mut lexer_state.state,
+            &mut lexer_state.result,
+        );
+    } else if c == '\\' {
+        match untreated.next() {
+            Some(c) => {
+                if c == '"' {
+                    lexer_state.buffer.push(c);
+                };
+            }
+            None => lexer_state.buffer.push('\\'),
+        };
+    } else {
+        lexer_state.buffer.push(c);
+    }
+}
+
+fn start_text(c: char, state: &mut State, buffer: &mut String) {
+    buffer.push(c);
+    (*state) = State::Text;
+}
+
+fn end_text(buffer: &mut String, state: &mut State, result: &mut Vec<Token>) {
+    buffer.push('"');
+    result.push(Token::Text(buffer.clone()));
+    (*state) = State::Neutral;
+    buffer.clear();
+}
+
+fn start_id(c: char, state: &mut State, buffer: &mut String) {
+    buffer.push(c);
+    (*state) = State::Id;
+}
+
+fn try_end_id(c: char, states: &mut LexerState) -> () {
+    if states.state == State::Id && !is_id_char(c) {
+        states.result.push(Token::Id(states.buffer.clone()));
+        states.buffer.clear();
+        states.state = State::Neutral;
+    }
+}
+
+fn neutral_character_lexer(c: char, states: &mut LexerState) -> Result<(), LexerError> {
+    match c {
+        '{' => states.result.push(Token::LeftBrace),
+        '}' => states.result.push(Token::RightBrace),
+        '(' => states.result.push(Token::LeftBracket),
+        ')' => states.result.push(Token::RightBracket),
+        '=' => states.result.push(Token::Equal),
+        ',' => states.result.push(Token::Comma),
+        '"' => start_text(c, &mut states.state, &mut states.buffer),
+        c if is_id_char(c) => start_id(c, &mut states.state, &mut states.buffer),
+        _ => {
+            return Err(LexerError::UnexpectedToken(format!(
+                "invalid character {}",
+                c
+            )))
+        }
+    }
+    Ok(())
 }
 
 fn is_id_char(c: char) -> bool {
@@ -124,60 +160,55 @@ fn is_id_char(c: char) -> bool {
 
 #[test]
 fn test_lexer() {
+    use Token::*;
+    fn lex_test(text: &str) -> Vec<Token> {
+        lexer(text.to_string()).unwrap()
+    }
+
+    assert_eq!(lex_test("id"), vec![Id("id".to_string())]);
+    assert_eq!(lex_test("i-d"), vec![Id("i-d".to_string())]);
+    assert_eq!(lex_test("-d"), vec![Id("-d".to_string())]);
+    assert_eq!(lex_test("d-"), vec![Id("d-".to_string())]);
+    assert_eq!(lex_test("\"text\""), vec![Text("\"text\"".to_string())]);
+
     assert_eq!(
-        lexer("id".to_string()).unwrap(),
-        vec![Token::Id("id".to_string())]
+        lex_test("id1 id2"),
+        vec![Id("id1".to_string()), Id("id2".to_string())]
     );
+
     assert_eq!(
-        lexer("i-d".to_string()).unwrap(),
-        vec![Token::Id("i-d".to_string())]
+        lex_test("{id}"),
+        vec![LeftBrace, Id("id".to_string()), RightBrace]
     );
+
     assert_eq!(
-        lexer("\"text\"".to_string()).unwrap(),
-        vec![Token::Text("\"text\"".to_string())]
+        lex_test("{\"id\"}"),
+        vec![LeftBrace, Text("\"id\"".to_string()), RightBrace]
     );
+
     assert_eq!(
-        lexer("id1 id2".to_string()).unwrap(),
-        vec![Token::Id("id1".to_string()), Token::Id("id2".to_string())]
-    );
-    assert_eq!(
-        lexer("{id}".to_string()).unwrap(),
+        lex_test("id1 id2 {id3}"),
         vec![
-            Token::LeftBrace,
-            Token::Id("id".to_string()),
-            Token::RightBrace
+            Id("id1".to_string()),
+            Id("id2".to_string()),
+            LeftBrace,
+            Id("id3".to_string()),
+            RightBrace
         ]
     );
+
     assert_eq!(
-        lexer("{\"id\"}".to_string()),
-        Ok(vec![
-            Token::LeftBrace,
-            Token::Text("\"id\"".to_string()),
-            Token::RightBrace
-        ])
-    );
-    assert_eq!(
-        lexer("id1 id2 {id3}".to_string()).unwrap(),
+        lex_test(r#"p(color="red"){"hello world!"}"#),
         vec![
-            Token::Id("id1".to_string()),
-            Token::Id("id2".to_string()),
-            Token::LeftBrace,
-            Token::Id("id3".to_string()),
-            Token::RightBrace
-        ]
-    );
-    assert_eq!(
-        lexer(r#"p(color="red"){"hello world!"}"#.to_string()).unwrap(),
-        vec![
-            Token::Id("p".to_string()),
-            Token::LeftBracket,
-            Token::Id("color".to_string()),
-            Token::Equal,
-            Token::Text("\"red\"".to_string()),
-            Token::RightBracket,
-            Token::LeftBrace,
-            Token::Text("\"hello world!\"".to_string()),
-            Token::RightBrace
+            Id("p".to_string()),
+            LeftBracket,
+            Id("color".to_string()),
+            Equal,
+            Text("\"red\"".to_string()),
+            RightBracket,
+            LeftBrace,
+            Text("\"hello world!\"".to_string()),
+            RightBrace
         ]
     )
 }
