@@ -4,7 +4,7 @@
 <element> ::= <id> <attributes> <value> | <text>
 <attributes> ::= '(' <attribute> ')' | '(' <attributes> ' ' <attribute> ')'
 <attribute> ::= <id> '=' <text>
-<text> :: = '"' <text> '"'
+<text> :: = '"' /*/  '"'
 <id> ::= <letter> | <letter> <id>
 <letter> ::= 'a' | 'b' | 'c' | 'd' | 'e' | 'f' |
              'g' | 'h' | 'i' | 'j' | 'k' | 'l' |
