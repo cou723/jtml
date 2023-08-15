@@ -29,10 +29,10 @@ fn main() -> Result<(), anyhow::Error> {
             }
         };
         // compile
-        let compiled = match compile(file_text){
+        let compiled = match compile(file_text) {
             Ok(compiled) => compiled,
             Err(e) => {
-                eprintln!("Error compiling '{}' ({})", filename,e);
+                eprintln!("Error compiling '{}' ({})", filename, e);
                 continue;
             }
         };
@@ -49,25 +49,28 @@ fn main() -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-enum CompileError{
+enum CompileError {
     UnexpectedToken(String),
 }
 
-impl std::fmt::Display for CompileError{
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result{
-        match self{
+impl std::fmt::Display for CompileError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
             CompileError::UnexpectedToken(s) => write!(f, "Unexpected token: {}", s),
         }
     }
 }
 
 fn compile(text: String) -> Result<String, CompileError> {
-    let mut tokens = match lexer::lexer(text){
-        Ok(tokens) => VecDeque::from(tokens),
-        Err(e) => return Err(CompileError::UnexpectedToken(e.to_string())),
-    };
+    let mut tokens = lexer::lexer(text)
+        .iter()
+        .map(|token| match token {
+            Ok(t) => t.clone(),
+            Err(_) => panic!("panic!"),
+        })
+        .collect::<VecDeque<_>>();
 
-    let ast = match parser::parser(&mut tokens){
+    let ast = match parser::parser(&mut tokens) {
         Ok(ast) => ast,
         Err(e) => return Err(CompileError::UnexpectedToken(e.to_string())),
     };

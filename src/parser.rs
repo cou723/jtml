@@ -111,7 +111,7 @@ fn element(tokens: &mut VecDeque<lexer::Token>) -> Result<Child, ParserError> {
     let front_token = tokens.front();
     match front_token {
         Some(token) => match token {
-            lexer::Token::Text(_text) => {
+            lexer::Token::StringLiteral(_text) => {
                 let text = _text.clone();
                 tokens.pop_front();
                 return Ok(Child::Text(text));
@@ -119,23 +119,23 @@ fn element(tokens: &mut VecDeque<lexer::Token>) -> Result<Child, ParserError> {
             _ => (),
         },
         None => {
-            return Err(ParserError::TokenIsNotEnough(lexer::Token::Id(
+            return Err(ParserError::TokenIsNotEnough(lexer::Token::Identifier(
                 "element-name".to_string(),
             )))
         }
     };
     let element_name = match tokens.front() {
         Some(token) => match token {
-            lexer::Token::Id(_id) => _id.clone(),
+            lexer::Token::Identifier(_id) => _id.clone(),
             _ => {
                 return Err(ParserError::UnexpectedToken(
-                    lexer::Token::Id("".to_string()),
+                    lexer::Token::Identifier("".to_string()),
                     token.to_string(),
                 ))
             }
         },
         None => {
-            return Err(ParserError::TokenIsNotEnough(lexer::Token::Id(
+            return Err(ParserError::TokenIsNotEnough(lexer::Token::Identifier(
                 "element-name".to_string(),
             )))
         }
@@ -172,16 +172,16 @@ fn attributes(
 fn attribute(tokens: &mut VecDeque<lexer::Token>) -> Result<(String, String), ParserError> {
     let key = match tokens.get(0) {
         Some(token) => match token {
-            lexer::Token::Id(_key) => _key.clone(),
+            lexer::Token::Identifier(_key) => _key.clone(),
             _ => {
                 return Err(ParserError::UnexpectedToken(
-                    lexer::Token::Id("any".to_string()),
+                    lexer::Token::Identifier("any".to_string()),
                     tokens[0].to_string(),
                 ))
             }
         },
         None => {
-            return Err(ParserError::TokenIsNotEnough(lexer::Token::Id(
+            return Err(ParserError::TokenIsNotEnough(lexer::Token::Identifier(
                 "attribute key".to_string(),
             )))
         }
@@ -200,16 +200,16 @@ fn attribute(tokens: &mut VecDeque<lexer::Token>) -> Result<(String, String), Pa
     };
     let value = match tokens.get(2) {
         Some(token) => match token {
-            lexer::Token::Text(_value) => _value.clone(),
+            lexer::Token::StringLiteral(_value) => _value.clone(),
             _ => {
                 return Err(ParserError::UnexpectedToken(
-                    lexer::Token::Text("any".to_string()),
+                    lexer::Token::StringLiteral("any".to_string()),
                     tokens[2].to_string(),
                 ))
             }
         },
         None => {
-            return Err(ParserError::TokenIsNotEnough(lexer::Token::Text(
+            return Err(ParserError::TokenIsNotEnough(lexer::Token::StringLiteral(
                 "attribute value".to_string(),
             )))
         }
@@ -239,9 +239,9 @@ mod test {
     #[test]
     fn test_attribute() {
         let mut tokens = VecDeque::from(vec![
-            lexer::Token::Id("id".to_string()),
+            lexer::Token::Identifier("id".to_string()),
             lexer::Token::Equal,
-            lexer::Token::Text("text".to_string()),
+            lexer::Token::StringLiteral("text".to_string()),
         ]);
         let result = parser::attribute(&mut tokens);
         assert_eq!(result.unwrap(), ("id".to_string(), "text".to_string()));
@@ -250,12 +250,12 @@ mod test {
     #[test]
     fn test_attributes() {
         let mut tokens = VecDeque::from(vec![
-            lexer::Token::Id("id".to_string()),
+            lexer::Token::Identifier("id".to_string()),
             lexer::Token::Equal,
-            lexer::Token::Text("text".to_string()),
-            lexer::Token::Id("id2".to_string()),
+            lexer::Token::StringLiteral("text".to_string()),
+            lexer::Token::Identifier("id2".to_string()),
             lexer::Token::Equal,
-            lexer::Token::Text("text2".to_string()),
+            lexer::Token::StringLiteral("text2".to_string()),
         ]);
         let result = parser::attributes(&mut tokens);
         assert_eq!(
@@ -276,7 +276,10 @@ mod test {
 
     #[test]
     fn test_element() {
-        let mut tokens = VecDeque::from(lexer::lexer(r#"p(){}"#.to_string()).unwrap());
+        let mut tokens = VecDeque::from(lexer::lexer(r#"p(){}"#.to_string()))
+            .iter()
+            .map(|t| t.clone().unwrap())
+            .collect();
         println!("{:?}", tokens);
         let result = parser::element(&mut tokens);
         assert_eq!(
@@ -291,7 +294,10 @@ mod test {
 
     #[test]
     fn test_element_with_attribute() {
-        let mut tokens = VecDeque::from(lexer::lexer(r#"p(width="100"){}"#.to_string()).unwrap());
+        let mut tokens = VecDeque::from(lexer::lexer(r#"p(width="100"){}"#.to_string()))
+            .iter()
+            .map(|t| t.clone().unwrap())
+            .collect();
         println!("{:?}", tokens);
         let result = parser::element(&mut tokens);
         assert_eq!(
@@ -305,7 +311,10 @@ mod test {
     }
     #[test]
     fn test_element_with_content() {
-        let mut tokens = VecDeque::from(lexer::lexer(r#"p(){"hello"}"#.to_string()).unwrap());
+        let mut tokens = VecDeque::from(lexer::lexer(r#"p(){"hello"}"#.to_string()))
+            .iter()
+            .map(|t| t.clone().unwrap())
+            .collect();
         println!("{:?}", tokens);
         let result = parser::element(&mut tokens);
         assert_eq!(
@@ -320,8 +329,10 @@ mod test {
 
     #[test]
     fn test_element_with_contents() {
-        let mut tokens =
-            VecDeque::from(lexer::lexer(r#"p(){"hello""world"}"#.to_string()).unwrap());
+        let mut tokens = VecDeque::from(lexer::lexer(r#"p(){"hello""world"}"#.to_string()))
+            .iter()
+            .map(|t| t.clone().unwrap())
+            .collect();
         println!("{:?}", tokens);
         let result = parser::element(&mut tokens);
         assert_eq!(
@@ -339,9 +350,12 @@ mod test {
 
     #[test]
     fn test_element_with_child_element() {
-        let mut tokens = VecDeque::from(
-            lexer::lexer(r#"p(){p(){"test"}p(){"test1""test2"}}}"#.to_string()).unwrap(),
-        );
+        let mut tokens = VecDeque::from(lexer::lexer(
+            r#"p(){p(){"test"}p(){"test1""test2"}}}"#.to_string(),
+        ))
+        .iter()
+        .map(|t| t.clone().unwrap())
+        .collect();
         println!("{:?}", tokens);
         let result = parser::element(&mut tokens);
         assert_eq!(
@@ -370,7 +384,10 @@ mod test {
 
     #[test]
     fn test_document() {
-        let mut tokens = VecDeque::from(lexer::lexer(r#"h1(){}p(){}"#.to_string()).unwrap());
+        let mut tokens = VecDeque::from(lexer::lexer(r#"h1(){}p(){}"#.to_string()))
+            .iter()
+            .map(|t| t.clone().unwrap())
+            .collect();
         println!("{:?}", tokens);
         let result = parser::document(&mut tokens);
         assert_eq!(

@@ -9,6 +9,6 @@ build = "build.rs"
 lalrpop = "0.20.0"
 
 [dependencies]
-lalrpop-util = { version = "0.20.0", features = ["lexer"] }
 anyhow = "1.0.71"
 structopt = "0.3.26"
+logos="*"

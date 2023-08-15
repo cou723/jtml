@@ -1,12 +1,12 @@
 <document> ::= <elements>
 <elements> ::= <element> | <elements> <element>
 <value> ::= '{' <elements> '}'
-<element> ::= <id> <attributes> <value> | <text>
+<element> ::= <ID> <attributes> <value> | <STRING_LITERAL>
 <attributes> ::= '(' <attribute> ')' | '(' <attributes> ' ' <attribute> ')'
-<attribute> ::= <id> '=' <text>
-<text> :: = '"' /*/  '"'
-<id> ::= <letter> | <letter> <id>
-<letter> ::= 'a' | 'b' | 'c' | 'd' | 'e' | 'f' |
+<attribute> ::= <ID> '=' <STRING_LITERAL>
+<STRING_LITERAL> :: = '"' /*/  '"'
+<ID> ::= <LETTER> | <LETTER> <ID>
+<LETTER> ::= 'a' | 'b' | 'c' | 'd' | 'e' | 'f' |
              'g' | 'h' | 'i' | 'j' | 'k' | 'l' |
              'm' | 'n' | 'o' | 'p' | 'q' | 'r' |
              's' | 't' | 'u' | 'v' | 'w' | 'x' |
