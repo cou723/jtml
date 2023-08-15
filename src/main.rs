@@ -62,13 +62,12 @@ impl std::fmt::Display for CompileError {
 }
 
 fn compile(text: String) -> Result<String, CompileError> {
-    let mut tokens = lexer::lexer(text)
-        .iter()
-        .map(|token| match token {
-            Ok(t) => t.clone(),
-            Err(_) => panic!("panic!"),
-        })
-        .collect::<VecDeque<_>>();
+    let mut tokens = VecDeque::from(match lexer::lexer(text){
+        Ok(tokens) => tokens,
+        Err(_e) => {
+            return Err(CompileError::UnexpectedToken("lexical error".to_string()));
+        },
+    });
 
     let ast = match parser::parser(&mut tokens) {
         Ok(ast) => ast,
