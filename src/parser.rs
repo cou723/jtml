@@ -233,6 +233,7 @@ fn one_token(expect: lexer::Token, tokens: &mut VecDeque<lexer::Token>) -> Resul
     }
 }
 
+#[cfg(test)]
 mod test {
     use std::collections::VecDeque;
 
