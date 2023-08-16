@@ -1,101 +1,32 @@
-use std::{collections::VecDeque, fmt::Display};
+mod child_element;
+mod document;
+mod element;
+mod parser_error;
 
 use crate::lexer;
+use std::collections::VecDeque;
+use child_element::Child;
+use document::Document;
+use element::Element;
+use parser_error::ParserError;
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct Document {
-    elements: VecDeque<Child>,
-}
-
-impl Document {
-    pub fn to_html(&self) -> String {
-        let mut html = String::new();
-        for element in &self.elements {
-            html.push_str(&element.to_html());
-        }
-        html
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum ParserError {
-    UnexpectedToken(lexer::Token, String),
-    TokenIsNotEnough(lexer::Token),
-}
-
-impl Display for ParserError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match self {
-            ParserError::UnexpectedToken(expect, actual) => {
-                write!(f, "Unexpected token: expect {}, actual {}", expect, actual)
-            }
-            ParserError::TokenIsNotEnough(expect) => {
-                write!(f, "Token is not enough: expect {}", expect)
-            }
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-struct Element {
-    element_name: String,
-    attributes: VecDeque<(String, String)>,
-    children: VecDeque<Child>,
-}
-
-impl Element {
-    fn to_html(&self) -> String {
-        let empty_elements = vec![
-            "br", "hr", "img", "input", "meta", "area", "base", "col", "embed", "keygen", "link",
-            "param", "source",
-        ];
-        let mut html = String::new();
-        html.push_str(&format!("<{}", self.element_name));
-        if empty_elements.contains(&self.element_name.as_str()) {
-            for (key, value) in &self.attributes {
-                html.push_str(&format!(" {}={}", key, value));
-            }
-            html.push_str(">");
-            return html;
-        }
-        for (key, value) in &self.attributes {
-            html.push_str(&format!(" {}={}", key, value));
-        }
-        html.push_str(">");
-        for child in &self.children {
-            html.push_str(&child.to_html());
-        }
-        html.push_str(&format!("</{}>", self.element_name));
-        html
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-enum Child {
-    Element(Element),
-    Text(String),
-}
-
-impl Child {
-    fn to_html(&self) -> String {
-        match self {
-            Child::Element(element) => element.to_html(),
-            Child::Text(text) => text.clone().trim_matches('"').to_string(),
-        }
-    }
-}
-
-pub fn parser(tokens: &mut VecDeque<lexer::Token>) -> Result<Document, ParserError> {
+pub fn parser(
+    tokens: &mut VecDeque<lexer::Token>,
+) -> Result<Document, ParserError> {
     document(tokens)
 }
 
-fn document(tokens: &mut VecDeque<lexer::Token>) -> Result<Document, ParserError> {
+fn document(
+    tokens: &mut VecDeque<lexer::Token>,
+) -> Result<Document, ParserError> {
     Ok(Document {
         elements: elements(tokens)?,
     })
 }
 
-fn elements(tokens: &mut VecDeque<lexer::Token>) -> Result<VecDeque<Child>, ParserError> {
+fn elements(
+    tokens: &mut VecDeque<lexer::Token>,
+) -> Result<VecDeque<Child>, ParserError> {
     let mut elements: VecDeque<Child> = VecDeque::new();
     loop {
         match element(tokens) {
@@ -107,7 +38,9 @@ fn elements(tokens: &mut VecDeque<lexer::Token>) -> Result<VecDeque<Child>, Pars
     }
 }
 
-fn element(tokens: &mut VecDeque<lexer::Token>) -> Result<Child, ParserError> {
+fn element(
+    tokens: &mut VecDeque<lexer::Token>,
+) -> Result<Child, ParserError> {
     let front_token = tokens.front();
     match front_token {
         Some(token) => match token {
@@ -119,9 +52,9 @@ fn element(tokens: &mut VecDeque<lexer::Token>) -> Result<Child, ParserError> {
             _ => (),
         },
         None => {
-            return Err(ParserError::TokenIsNotEnough(lexer::Token::Identifier(
-                "element-name".to_string(),
-            )))
+            return Err(ParserError::TokenIsNotEnough(
+                lexer::Token::Identifier("element-name".to_string()),
+            ))
         }
     };
     let element_name = match tokens.front() {
@@ -135,9 +68,9 @@ fn element(tokens: &mut VecDeque<lexer::Token>) -> Result<Child, ParserError> {
             }
         },
         None => {
-            return Err(ParserError::TokenIsNotEnough(lexer::Token::Identifier(
-                "element-name".to_string(),
-            )))
+            return Err(ParserError::TokenIsNotEnough(
+                lexer::Token::Identifier("element-name".to_string()),
+            ))
         }
     };
     tokens.pop_front();
@@ -169,7 +102,9 @@ fn attributes(
     }
 }
 
-fn attribute(tokens: &mut VecDeque<lexer::Token>) -> Result<(String, String), ParserError> {
+fn attribute(
+    tokens: &mut VecDeque<lexer::Token>,
+) -> Result<(String, String), ParserError> {
     let key = match tokens.get(0) {
         Some(token) => match token {
             lexer::Token::Identifier(_key) => _key.clone(),
@@ -181,9 +116,9 @@ fn attribute(tokens: &mut VecDeque<lexer::Token>) -> Result<(String, String), Pa
             }
         },
         None => {
-            return Err(ParserError::TokenIsNotEnough(lexer::Token::Identifier(
-                "attribute key".to_string(),
-            )))
+            return Err(ParserError::TokenIsNotEnough(
+                lexer::Token::Identifier("attribute key".to_string()),
+            ))
         }
     };
     match tokens.get(1) {
@@ -196,7 +131,11 @@ fn attribute(tokens: &mut VecDeque<lexer::Token>) -> Result<(String, String), Pa
                 ))
             }
         },
-        None => return Err(ParserError::TokenIsNotEnough(lexer::Token::Equal)),
+        None => {
+            return Err(ParserError::TokenIsNotEnough(
+                lexer::Token::Equal,
+            ))
+        }
     };
     let value = match tokens.get(2) {
         Some(token) => match token {
@@ -209,9 +148,9 @@ fn attribute(tokens: &mut VecDeque<lexer::Token>) -> Result<(String, String), Pa
             }
         },
         None => {
-            return Err(ParserError::TokenIsNotEnough(lexer::Token::StringLiteral(
-                "attribute value".to_string(),
-            )))
+            return Err(ParserError::TokenIsNotEnough(
+                lexer::Token::StringLiteral("attribute value".to_string()),
+            ))
         }
     };
     tokens.pop_front();
@@ -220,13 +159,19 @@ fn attribute(tokens: &mut VecDeque<lexer::Token>) -> Result<(String, String), Pa
     Ok((key, value))
 }
 
-fn one_token(expect: lexer::Token, tokens: &mut VecDeque<lexer::Token>) -> Result<(), ParserError> {
+fn one_token(
+    expect: lexer::Token,
+    tokens: &mut VecDeque<lexer::Token>,
+) -> Result<(), ParserError> {
     match tokens.remove(0) {
         Some(token) => {
             if token == expect {
                 Ok(())
             } else {
-                Err(ParserError::UnexpectedToken(expect, token.to_string()))
+                Err(ParserError::UnexpectedToken(
+                    expect,
+                    token.to_string(),
+                ))
             }
         }
         None => Err(ParserError::TokenIsNotEnough(expect)),
