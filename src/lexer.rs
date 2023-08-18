@@ -1,5 +1,5 @@
 use logos::Logos;
-use std::fmt;
+use std::{collections::VecDeque, fmt};
 
 #[derive(Logos, Debug, PartialEq, Clone)]
 pub enum Token {
@@ -48,12 +48,12 @@ impl fmt::Display for Token {
     }
 }
 
-pub fn lexer(text: String) -> Result<Vec<Token>, String> {
-    let mut result: Vec<Token> = Vec::new();
+pub fn lexer(text: String) -> Result<VecDeque<Token>, String> {
+    let mut result: VecDeque<Token> = VecDeque::new();
     let mut lexer = Token::lexer(text.as_str());
     while let Some(token) = lexer.next() {
         match token {
-            Ok(token) => result.push(token),
+            Ok(token) => result.push_back(token),
             Err(_) => return Err(format!("Invalid token: {}", lexer.slice())),
         }
     }
@@ -61,11 +61,13 @@ pub fn lexer(text: String) -> Result<Vec<Token>, String> {
 }
 
 mod test {
+    use std::collections::VecDeque;
+
     use super::Token;
 
     // test 関数内で使ってるのになぜかdead_code warningが出るため
     #[allow(dead_code)]
-    fn lexer(str: &str) -> Vec<Token> {
+    fn lexer(str: &str) -> VecDeque<Token> {
         super::lexer(str.to_string()).unwrap()
     }
 
@@ -74,19 +76,19 @@ mod test {
         let mut parsed = lexer(r#""string""#);
         assert_eq!(parsed.len(), 1);
         assert_eq!(
-            parsed.pop().unwrap(),
+            parsed.pop_front().unwrap(),
             super::Token::StringLiteral(r#""string""#.to_string())
         );
     }
 
     #[test]
-    fn line_comment(){
+    fn line_comment() {
         let parsed = lexer(r#"// comment"#);
         assert_eq!(parsed.len(), 0);
     }
 
     #[test]
-    fn block_comment(){
+    fn block_comment() {
         let parsed = lexer(r#"/* comment */"#);
         assert_eq!(parsed.len(), 0);
     }
@@ -96,13 +98,13 @@ mod test {
         let mut parsed = lexer(r#"attribute = "value""#);
         assert_eq!(parsed.len(), 3);
         assert_eq!(
-            parsed.pop().unwrap(),
-            super::Token::StringLiteral(r#""value""#.to_string())
-        );
-        assert_eq!(parsed.pop().unwrap(), super::Token::Equal);
-        assert_eq!(
-            parsed.pop().unwrap(),
+            parsed.pop_front().unwrap(),
             super::Token::Identifier("attribute".to_string())
+        );
+        assert_eq!(parsed.pop_front().unwrap(), super::Token::Equal);
+        assert_eq!(
+            parsed.pop_front().unwrap(),
+            super::Token::StringLiteral(r#""value""#.to_string())
         );
     }
 
@@ -110,136 +112,144 @@ mod test {
     fn single_attributes() {
         let mut parsed = lexer(r#"(attribute = "value")"#);
         assert_eq!(parsed.len(), 5);
-        assert_eq!(parsed.pop().unwrap(), super::Token::RightParen);
+        assert_eq!(parsed.pop_front().unwrap(), super::Token::LeftParen);
+
         assert_eq!(
-            parsed.pop().unwrap(),
-            super::Token::StringLiteral(r#""value""#.to_string())
-        );
-        assert_eq!(parsed.pop().unwrap(), super::Token::Equal);
-        assert_eq!(
-            parsed.pop().unwrap(),
+            parsed.pop_front().unwrap(),
             super::Token::Identifier("attribute".to_string())
         );
-        assert_eq!(parsed.pop().unwrap(), super::Token::LeftParen);
+        assert_eq!(parsed.pop_front().unwrap(), super::Token::Equal);
+        assert_eq!(
+            parsed.pop_front().unwrap(),
+            super::Token::StringLiteral(r#""value""#.to_string())
+        );
+        assert_eq!(parsed.pop_front().unwrap(), super::Token::RightParen);
     }
 
     #[test]
     fn multiple_attributes() {
         let mut parsed = lexer(r#"(attribute = "value" attribute = "value")"#);
         assert_eq!(parsed.len(), 8);
-        assert_eq!(parsed.pop().unwrap(), super::Token::RightParen);
+        assert_eq!(parsed.pop_front().unwrap(), super::Token::LeftParen);
         assert_eq!(
-            parsed.pop().unwrap(),
-            super::Token::StringLiteral(r#""value""#.to_string())
-        );
-        assert_eq!(parsed.pop().unwrap(), super::Token::Equal);
-        assert_eq!(
-            parsed.pop().unwrap(),
+            parsed.pop_front().unwrap(),
             super::Token::Identifier("attribute".to_string())
         );
+        assert_eq!(parsed.pop_front().unwrap(), super::Token::Equal);
         assert_eq!(
-            parsed.pop().unwrap(),
+            parsed.pop_front().unwrap(),
             super::Token::StringLiteral(r#""value""#.to_string())
         );
-        assert_eq!(parsed.pop().unwrap(), super::Token::Equal);
+
         assert_eq!(
-            parsed.pop().unwrap(),
+            parsed.pop_front().unwrap(),
             super::Token::Identifier("attribute".to_string())
         );
-        assert_eq!(parsed.pop().unwrap(), super::Token::LeftParen);
+        assert_eq!(parsed.pop_front().unwrap(), super::Token::Equal);
+        assert_eq!(
+            parsed.pop_front().unwrap(),
+            super::Token::StringLiteral(r#""value""#.to_string())
+        );
+
+        assert_eq!(parsed.pop_front().unwrap(), super::Token::RightParen);
     }
 
     #[test]
     fn value() {
         let mut parsed = lexer(r#"{"test"}"#);
         assert_eq!(parsed.len(), 3);
-        assert_eq!(parsed.pop().unwrap(), super::Token::RightBracket);
+        assert_eq!(parsed.pop_front().unwrap(), super::Token::LeftBracket);
         assert_eq!(
-            parsed.pop().unwrap(),
+            parsed.pop_front().unwrap(),
             super::Token::StringLiteral(r#""test""#.to_string())
         );
-        assert_eq!(parsed.pop().unwrap(), super::Token::LeftBracket);
+        assert_eq!(parsed.pop_front().unwrap(), super::Token::RightBracket);
     }
 
     #[test]
     fn empty_html_element() {
         let mut parsed = lexer(r#"p(){}"#);
         assert_eq!(parsed.len(), 5);
-        assert_eq!(parsed.pop().unwrap(), super::Token::RightBracket);
-        assert_eq!(parsed.pop().unwrap(), super::Token::LeftBracket);
-        assert_eq!(parsed.pop().unwrap(), super::Token::RightParen);
-        assert_eq!(parsed.pop().unwrap(), super::Token::LeftParen);
         assert_eq!(
-            parsed.pop().unwrap(),
+            parsed.pop_front().unwrap(),
             super::Token::Identifier("p".to_string())
         );
+        assert_eq!(parsed.pop_front().unwrap(), super::Token::LeftParen);
+        assert_eq!(parsed.pop_front().unwrap(), super::Token::RightParen);
+        assert_eq!(parsed.pop_front().unwrap(), super::Token::LeftBracket);
+        assert_eq!(parsed.pop_front().unwrap(), super::Token::RightBracket);
     }
 
     #[test]
     fn string_literal_html_element() {
         let mut parsed = lexer(r#"p(){"test"}"#);
         assert_eq!(parsed.len(), 6);
-        assert_eq!(parsed.pop().unwrap(), super::Token::RightBracket);
         assert_eq!(
-            parsed.pop().unwrap(),
-            super::Token::StringLiteral(r#""test""#.to_string())
-        );
-        assert_eq!(parsed.pop().unwrap(), super::Token::LeftBracket);
-        assert_eq!(parsed.pop().unwrap(), super::Token::RightParen);
-        assert_eq!(parsed.pop().unwrap(), super::Token::LeftParen);
-        assert_eq!(
-            parsed.pop().unwrap(),
+            parsed.pop_front().unwrap(),
             super::Token::Identifier("p".to_string())
         );
+        assert_eq!(parsed.pop_front().unwrap(), super::Token::LeftParen);
+        assert_eq!(parsed.pop_front().unwrap(), super::Token::RightParen);
+        assert_eq!(parsed.pop_front().unwrap(), super::Token::LeftBracket);
+        assert_eq!(
+            parsed.pop_front().unwrap(),
+            super::Token::StringLiteral(r#""test""#.to_string())
+        );
+        assert_eq!(parsed.pop_front().unwrap(), super::Token::RightBracket);
     }
 
     #[test]
     fn attribute_html_element() {
         let mut parsed = lexer(r#"p(attribute = "value"){}"#);
         assert_eq!(parsed.len(), 8);
-        assert_eq!(parsed.pop().unwrap(), super::Token::RightBracket);
-        assert_eq!(parsed.pop().unwrap(), super::Token::LeftBracket);
-        assert_eq!(parsed.pop().unwrap(), super::Token::RightParen);
         assert_eq!(
-            parsed.pop().unwrap(),
-            super::Token::StringLiteral(r#""value""#.to_string())
-        );
-        assert_eq!(parsed.pop().unwrap(), super::Token::Equal);
-        assert_eq!(
-            parsed.pop().unwrap(),
-            super::Token::Identifier("attribute".to_string())
-        );
-        assert_eq!(parsed.pop().unwrap(), super::Token::LeftParen);
-        assert_eq!(
-            parsed.pop().unwrap(),
+            parsed.pop_front().unwrap(),
             super::Token::Identifier("p".to_string())
         );
+        assert_eq!(parsed.pop_front().unwrap(), super::Token::LeftParen);
+
+        assert_eq!(
+            parsed.pop_front().unwrap(),
+            super::Token::Identifier("attribute".to_string())
+        );
+        assert_eq!(parsed.pop_front().unwrap(), super::Token::Equal);
+
+        assert_eq!(
+            parsed.pop_front().unwrap(),
+            super::Token::StringLiteral(r#""value""#.to_string())
+        );
+
+        assert_eq!(parsed.pop_front().unwrap(), super::Token::RightParen);
+        assert_eq!(parsed.pop_front().unwrap(), super::Token::LeftBracket);
+        assert_eq!(parsed.pop_front().unwrap(), super::Token::RightBracket);
     }
 
     #[test]
     fn html_element() {
         let mut parsed = lexer(r#"p(attribute = "value"){"test"}"#);
         assert_eq!(parsed.len(), 9);
-        assert_eq!(parsed.pop().unwrap(), super::Token::RightBracket);
         assert_eq!(
-            parsed.pop().unwrap(),
-            super::Token::StringLiteral(r#""test""#.to_string())
-        );
-        assert_eq!(parsed.pop().unwrap(), super::Token::LeftBracket);
-        assert_eq!(parsed.pop().unwrap(), super::Token::RightParen);
-        assert_eq!(
-            parsed.pop().unwrap(),
-            super::Token::StringLiteral(r#""value""#.to_string())
-        );
-        assert_eq!(parsed.pop().unwrap(), super::Token::Equal);
-        assert_eq!(
-            parsed.pop().unwrap(),
-            super::Token::Identifier("attribute".to_string())
-        );
-        assert_eq!(parsed.pop().unwrap(), super::Token::LeftParen);
-        assert_eq!(
-            parsed.pop().unwrap(),
+            parsed.pop_front().unwrap(),
             super::Token::Identifier("p".to_string())
         );
+        assert_eq!(parsed.pop_front().unwrap(), super::Token::LeftParen);
+        assert_eq!(
+            parsed.pop_front().unwrap(),
+            super::Token::Identifier("attribute".to_string())
+        );
+        assert_eq!(parsed.pop_front().unwrap(), super::Token::Equal);
+        assert_eq!(
+            parsed.pop_front().unwrap(),
+            super::Token::StringLiteral(r#""value""#.to_string())
+        );
+        assert_eq!(parsed.pop_front().unwrap(), super::Token::RightParen);
+        assert_eq!(parsed.pop_front().unwrap(), super::Token::LeftBracket);
+
+        assert_eq!(
+            parsed.pop_front().unwrap(),
+            super::Token::StringLiteral(r#""test""#.to_string())
+        );
+
+        assert_eq!(parsed.pop_front().unwrap(), super::Token::RightBracket);
     }
 }

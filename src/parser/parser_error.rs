@@ -1,5 +1,5 @@
-use std::fmt::Display;
 use crate::lexer;
+use std::fmt::Display;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ParserError {

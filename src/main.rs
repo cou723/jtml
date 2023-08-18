@@ -1,8 +1,9 @@
 mod convert_error;
-mod lexer;
-mod parser;
 mod converter;
+pub mod lexer;
+pub mod parser;
 
+use converter::convert;
 use std::fs;
 use std::io::Write;
 use std::path::Path;
@@ -32,7 +33,7 @@ fn main() -> Result<(), anyhow::Error> {
             }
         };
         // convert
-        let converted = match converter::convert(file_text) {
+        let converted = match convert(file_text) {
             Ok(converted) => converted,
             Err(e) => {
                 eprintln!("Error compiling '{}' ({})", filename, e);

@@ -1,32 +1,26 @@
-mod child_element;
+pub mod child_element;
 mod document;
-mod element;
+pub mod element;
 mod parser_error;
 
 use crate::lexer;
-use std::collections::VecDeque;
-use child_element::Child;
-use document::Document;
-use element::Element;
+pub use child_element::Child;
+pub use document::Document;
+pub use element::Element;
 use parser_error::ParserError;
+use std::collections::VecDeque;
 
-pub fn parser(
-    tokens: &mut VecDeque<lexer::Token>,
-) -> Result<Document, ParserError> {
+pub fn parser(tokens: &mut VecDeque<lexer::Token>) -> Result<Document, ParserError> {
     document(tokens)
 }
 
-fn document(
-    tokens: &mut VecDeque<lexer::Token>,
-) -> Result<Document, ParserError> {
+fn document(tokens: &mut VecDeque<lexer::Token>) -> Result<Document, ParserError> {
     Ok(Document {
         elements: elements(tokens)?,
     })
 }
 
-fn elements(
-    tokens: &mut VecDeque<lexer::Token>,
-) -> Result<VecDeque<Child>, ParserError> {
+fn elements(tokens: &mut VecDeque<lexer::Token>) -> Result<VecDeque<Child>, ParserError> {
     let mut elements: VecDeque<Child> = VecDeque::new();
     loop {
         match element(tokens) {
@@ -38,9 +32,7 @@ fn elements(
     }
 }
 
-fn element(
-    tokens: &mut VecDeque<lexer::Token>,
-) -> Result<Child, ParserError> {
+fn element(tokens: &mut VecDeque<lexer::Token>) -> Result<Child, ParserError> {
     let front_token = tokens.front();
     match front_token {
         Some(token) => match token {
@@ -52,9 +44,9 @@ fn element(
             _ => (),
         },
         None => {
-            return Err(ParserError::TokenIsNotEnough(
-                lexer::Token::Identifier("element-name".to_string()),
-            ))
+            return Err(ParserError::TokenIsNotEnough(lexer::Token::Identifier(
+                "element-name".to_string(),
+            )))
         }
     };
     let element_name = match tokens.front() {
@@ -68,9 +60,9 @@ fn element(
             }
         },
         None => {
-            return Err(ParserError::TokenIsNotEnough(
-                lexer::Token::Identifier("element-name".to_string()),
-            ))
+            return Err(ParserError::TokenIsNotEnough(lexer::Token::Identifier(
+                "element-name".to_string(),
+            )))
         }
     };
     tokens.pop_front();
@@ -102,9 +94,7 @@ fn attributes(
     }
 }
 
-fn attribute(
-    tokens: &mut VecDeque<lexer::Token>,
-) -> Result<(String, String), ParserError> {
+fn attribute(tokens: &mut VecDeque<lexer::Token>) -> Result<(String, String), ParserError> {
     let key = match tokens.get(0) {
         Some(token) => match token {
             lexer::Token::Identifier(_key) => _key.clone(),
@@ -116,9 +106,9 @@ fn attribute(
             }
         },
         None => {
-            return Err(ParserError::TokenIsNotEnough(
-                lexer::Token::Identifier("attribute key".to_string()),
-            ))
+            return Err(ParserError::TokenIsNotEnough(lexer::Token::Identifier(
+                "attribute key".to_string(),
+            )))
         }
     };
     match tokens.get(1) {
@@ -131,11 +121,7 @@ fn attribute(
                 ))
             }
         },
-        None => {
-            return Err(ParserError::TokenIsNotEnough(
-                lexer::Token::Equal,
-            ))
-        }
+        None => return Err(ParserError::TokenIsNotEnough(lexer::Token::Equal)),
     };
     let value = match tokens.get(2) {
         Some(token) => match token {
@@ -148,9 +134,9 @@ fn attribute(
             }
         },
         None => {
-            return Err(ParserError::TokenIsNotEnough(
-                lexer::Token::StringLiteral("attribute value".to_string()),
-            ))
+            return Err(ParserError::TokenIsNotEnough(lexer::Token::StringLiteral(
+                "attribute value".to_string(),
+            )))
         }
     };
     tokens.pop_front();
@@ -159,19 +145,13 @@ fn attribute(
     Ok((key, value))
 }
 
-fn one_token(
-    expect: lexer::Token,
-    tokens: &mut VecDeque<lexer::Token>,
-) -> Result<(), ParserError> {
+fn one_token(expect: lexer::Token, tokens: &mut VecDeque<lexer::Token>) -> Result<(), ParserError> {
     match tokens.remove(0) {
         Some(token) => {
             if token == expect {
                 Ok(())
             } else {
-                Err(ParserError::UnexpectedToken(
-                    expect,
-                    token.to_string(),
-                ))
+                Err(ParserError::UnexpectedToken(expect, token.to_string()))
             }
         }
         None => Err(ParserError::TokenIsNotEnough(expect)),

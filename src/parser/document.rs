@@ -4,7 +4,7 @@ use std::collections::VecDeque;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Document {
-    pub(crate) elements: VecDeque<Child>,
+    pub elements: VecDeque<Child>,
 }
 
 impl Document {

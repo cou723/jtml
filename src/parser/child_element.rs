@@ -1,7 +1,7 @@
 use crate::parser::element::Element;
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) enum Child {
+pub enum Child {
     Element(Element),
     Text(String),
 }

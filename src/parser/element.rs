@@ -2,11 +2,15 @@ use super::child_element::Child;
 
 use std::collections::VecDeque;
 
+pub type Attribute = (String, String);
+pub type Attributes = VecDeque<Attribute>;
+pub type Children = VecDeque<Child>;
+
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) struct Element {
-    pub(crate) element_name: String,
-    pub(crate) attributes: VecDeque<(String, String)>,
-    pub(crate) children: VecDeque<Child>,
+pub struct Element {
+    pub element_name: String,
+    pub attributes: Attributes,
+    pub children: Children,
 }
 
 impl Element {
