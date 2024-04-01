@@ -14,7 +14,7 @@ pub struct Element {
 }
 
 impl Element {
-    pub(crate) fn to_html(&self) -> String {
+    pub(crate) fn to_html(&self, ignore_comment: bool) -> String {
         let empty_elements = vec![
             "br", "hr", "img", "input", "meta", "area", "base", "col", "embed", "keygen", "link",
             "param", "source",
@@ -33,9 +33,40 @@ impl Element {
         }
         html.push_str(">");
         for child in &self.children {
-            html.push_str(&child.to_html());
+            html.push_str(&child.to_html(ignore_comment));
         }
         html.push_str(&format!("</{}>", self.element_name));
         html
+    }
+
+    pub(crate) fn to_jtml(&self, ignore_comment: bool) -> String {
+        let empty_elements = vec![
+            "br", "hr", "img", "input", "meta", "area", "base", "col", "embed", "keygen", "link",
+            "param", "source",
+        ];
+
+        let mut jtml = String::new();
+
+        jtml.push_str(&format!("{}(", self.element_name));
+
+        // 子要素を持たない要素の場合
+        if empty_elements.contains(&self.element_name.as_str()) {
+            for (key, value) in &self.attributes {
+                jtml.push_str(&format!(" {}={}", key, value));
+            }
+            jtml.push_str(")");
+            return jtml;
+        }
+
+        // 子要素を持つ要素の場合
+        for (key, value) in &self.attributes {
+            jtml.push_str(&format!(" {}={}", key, value));
+        }
+        jtml.push_str("){");
+        for child in &self.children {
+            jtml.push_str(&child.to_jtml(ignore_comment));
+        }
+        jtml.push_str("}");
+        jtml
     }
 }

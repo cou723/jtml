@@ -33,13 +33,18 @@ fn elements(tokens: &mut VecDeque<lexer::Token>) -> Result<VecDeque<Child>, Pars
 }
 
 fn element(tokens: &mut VecDeque<lexer::Token>) -> Result<Child, ParserError> {
-    let front_token = tokens.front();
+    let front_token = tokens.pop_front();
     match front_token {
         Some(token) => match token {
-            lexer::Token::StringLiteral(_text) => {
-                let text = _text.clone();
+            lexer::Token::StringLiteral(text) => {
+                let new_text = text.clone();
                 tokens.pop_front();
-                return Ok(Child::Text(text));
+                return Ok(Child::Text(new_text));
+            }
+            lexer::Token::Comment(text) => {
+                let new_text = text.clone();
+                tokens.pop_front();
+                return Ok(Child::Comment(new_text));
             }
             _ => (),
         },
@@ -51,7 +56,7 @@ fn element(tokens: &mut VecDeque<lexer::Token>) -> Result<Child, ParserError> {
     };
     let element_name = match tokens.front() {
         Some(token) => match token {
-            lexer::Token::Identifier(_id) => _id.clone(),
+            lexer::Token::Identifier(id) => id.clone(),
             _ => {
                 return Err(ParserError::UnexpectedToken(
                     lexer::Token::Identifier("".to_string()),

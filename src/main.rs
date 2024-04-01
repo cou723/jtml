@@ -33,7 +33,7 @@ fn main() -> Result<(), anyhow::Error> {
             }
         };
         // convert
-        let converted = match convert(file_text) {
+        let converted = match convert(file_text, true) {
             Ok(converted) => converted,
             Err(e) => {
                 eprintln!("Error compiling '{}' ({})", filename, e);

@@ -2,7 +2,7 @@ use std::collections::VecDeque;
 
 use crate::{convert_error::ConvertError, lexer::lexer, parser::parser};
 
-pub(crate) fn convert(text: String) -> Result<String, ConvertError> {
+pub(crate) fn convert(text: String, ignore_comment: bool) -> Result<String, ConvertError> {
     let mut tokens = VecDeque::from(match lexer(text) {
         Ok(tokens) => tokens,
         Err(e) => {
@@ -14,5 +14,5 @@ pub(crate) fn convert(text: String) -> Result<String, ConvertError> {
         Ok(ast) => ast,
         Err(e) => return Err(ConvertError::UnexpectedToken(e.to_string())),
     };
-    Ok(ast.to_html())
+    Ok(ast.to_html(ignore_comment))
 }

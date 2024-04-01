@@ -6,9 +6,9 @@ pub enum Token {
     #[regex(r#""([^"\\]|\\t|\\u|\\n|\\")*""#, |lex| lex.slice().to_string())]
     StringLiteral(String),
 
-    #[regex(r#"/\*[^*/]*\*/"#, logos::skip)]
-    #[regex(r#"//.*"#, logos::skip)]
-    Comment,
+    // #[regex(r#"/\*[^*/]*\*/"#)]
+    #[regex(r#"//.*"#, |lex| lex.slice().to_string())]
+    Comment(String),
 
     #[regex(r#"[0-9A-Za-z\-]+"#, |lex| lex.slice().to_string())]
     Identifier(String),
@@ -35,8 +35,8 @@ pub enum Token {
 impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Token::StringLiteral(_string) => write!(f, "Text({})", _string),
-            Token::Comment => write!(f, "Comment"),
+            Token::StringLiteral(string) => write!(f, "Text({})", string),
+            Token::Comment(string) => write!(f, "Comment({})", string),
             Token::LeftBracket => write!(f, "LeftBracket"),
             Token::RightBracket => write!(f, "RightBracket"),
             Token::LeftParen => write!(f, "LeftBrace"),
@@ -84,14 +84,14 @@ mod test {
     #[test]
     fn line_comment() {
         let parsed = lexer(r#"// comment"#);
-        assert_eq!(parsed.len(), 0);
+        assert_eq!(parsed.len(), 1);
     }
 
-    #[test]
-    fn block_comment() {
-        let parsed = lexer(r#"/* comment */"#);
-        assert_eq!(parsed.len(), 0);
-    }
+    // #[test]
+    // fn block_comment() {
+    //     let parsed = lexer(r#"/* comment */"#);
+    //     assert_eq!(parsed.len(), 0);
+    // }
 
     #[test]
     fn attribute() {
