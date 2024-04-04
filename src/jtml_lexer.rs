@@ -78,6 +78,16 @@ mod test {
     }
 
     #[test]
+    fn empty_string_literal() {
+        let mut parsed = lexer(r#""""#);
+        assert_eq!(parsed.len(), 1);
+        assert_eq!(
+            parsed.pop_front().unwrap(),
+            JtmlToken::StringLiteral(r#""""#.to_string())
+        );
+    }
+
+    #[test]
     fn string_literal() {
         let mut parsed = lexer(r#""string""#);
         assert_eq!(parsed.len(), 1);
@@ -88,16 +98,28 @@ mod test {
     }
 
     #[test]
+    fn invalid_string_literal() {
+        let error = super::lexer("\"string".to_string()).unwrap_err();
+        assert_eq!(error, "Invalid token: \"string");
+    }
+
+    #[test]
+    fn invalid_string_literal_not_terminal() {
+        let error = super::lexer("string\"".to_string()).unwrap_err();
+        assert_eq!(error, "Invalid token: \"");
+    }
+
+    #[test]
     fn line_comment() {
         let parsed = lexer(r#"// comment"#);
         assert_eq!(parsed.len(), 1);
     }
 
-    // #[test]
-    // fn block_comment() {
-    //     let parsed = lexer(r#"/* comment */"#);
-    //     assert_eq!(parsed.len(), 0);
-    // }
+    #[test]
+    fn invalid_line_comment() {
+        let error = super::lexer((r#"/ comment"#).to_string()).unwrap_err();
+        assert_eq!(error, "Invalid token: /");
+    }
 
     #[test]
     fn attribute() {

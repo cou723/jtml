@@ -32,14 +32,16 @@ fn main() -> Result<(), anyhow::Error> {
                 continue;
             }
         };
+
         // convert
-        let converted = match html_generator(file_text, true) {
+        let html = match html_generator(file_text, true) {
             Ok(converted) => converted,
             Err(e) => {
                 eprintln!("Error compiling '{}' ({})", filename, e);
                 continue;
             }
         };
+
         // write to file
         let mut file = match fs::File::create(Path::new(&filename).with_extension("html")) {
             Ok(file) => file,
@@ -48,7 +50,7 @@ fn main() -> Result<(), anyhow::Error> {
                 continue;
             }
         };
-        file.write(converted.as_bytes())?;
+        file.write(html.as_bytes())?;
     }
     Ok(())
 }
