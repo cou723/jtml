@@ -57,13 +57,12 @@ pub(crate) fn parse(tokens: &mut VecDeque<JtmlToken>) -> Result<AstNode, ParserE
     }))
 }
 
+#[cfg(test)]
 mod test {
     use std::collections::VecDeque;
 
-    use crate::{
-        jtml_lexer::test_utils::lexer,
-        jtml_parser::{ast_node::AstNode, element::Element, parser::ast_node_parser},
-    };
+    use crate::jtml_lexer::test_utils::lexer;
+    use crate::jtml_parser::{ast_node::AstNode, element::Element, parser::ast_node_parser};
 
     #[test]
     fn test_element() {

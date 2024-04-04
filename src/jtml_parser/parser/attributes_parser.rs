@@ -65,15 +65,13 @@ fn parse_attribute(tokens: &mut VecDeque<JtmlToken>) -> Result<(String, String),
     Ok((key, value))
 }
 
+#[cfg(test)]
 mod test {
     use std::collections::VecDeque;
 
     use crate::{
         jtml_lexer::test_utils::lexer,
-        jtml_parser::parser::{
-            attributes_parser::{self, parse, parse_attribute},
-            one_token_parser,
-        },
+        jtml_parser::parser::attributes_parser::{self, parse_attribute},
     };
 
     #[test]
