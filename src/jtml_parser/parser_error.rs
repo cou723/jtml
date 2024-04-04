@@ -1,10 +1,10 @@
-use crate::lexer;
-use std::fmt::Display;
+use crate::jtml_lexer;
+use std::{error::Error, fmt::Display};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ParserError {
-    UnexpectedToken(lexer::Token, String),
-    TokenIsNotEnough(lexer::Token),
+    UnexpectedToken(jtml_lexer::JtmlToken, String),
+    TokenIsNotEnough(jtml_lexer::JtmlToken),
 }
 
 impl Display for ParserError {
@@ -19,3 +19,5 @@ impl Display for ParserError {
         }
     }
 }
+
+impl Error for ParserError {}

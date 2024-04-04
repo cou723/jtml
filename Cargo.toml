@@ -1,3 +1,4 @@
+workspace = { members = ["coverage"] }
 [package]
 name = "jtml"
 version = "0.1.0"

@@ -1,14 +1,14 @@
-use super::child_element::Child;
+use super::ast_node::AstNode;
 
 use std::collections::VecDeque;
 
 pub type Attribute = (String, String);
 pub type Attributes = VecDeque<Attribute>;
-pub type Children = VecDeque<Child>;
 
+pub type Children = VecDeque<AstNode>;
 #[derive(Debug, Clone, PartialEq)]
 pub struct Element {
-    pub element_name: String,
+    pub tag_name: String,
     pub attributes: Attributes,
     pub children: Children,
 }
@@ -20,8 +20,8 @@ impl Element {
             "param", "source",
         ];
         let mut html = String::new();
-        html.push_str(&format!("<{}", self.element_name));
-        if empty_elements.contains(&self.element_name.as_str()) {
+        html.push_str(&format!("<{}", self.tag_name));
+        if empty_elements.contains(&self.tag_name.as_str()) {
             for (key, value) in &self.attributes {
                 html.push_str(&format!(" {}={}", key, value));
             }
@@ -35,7 +35,7 @@ impl Element {
         for child in &self.children {
             html.push_str(&child.to_html(ignore_comment));
         }
-        html.push_str(&format!("</{}>", self.element_name));
+        html.push_str(&format!("</{}>", self.tag_name));
         html
     }
 
@@ -47,10 +47,10 @@ impl Element {
 
         let mut jtml = String::new();
 
-        jtml.push_str(&format!("{}(", self.element_name));
+        jtml.push_str(&format!("{}(", self.tag_name));
 
         // 子要素を持たない要素の場合
-        if empty_elements.contains(&self.element_name.as_str()) {
+        if empty_elements.contains(&self.tag_name.as_str()) {
             for (key, value) in &self.attributes {
                 jtml.push_str(&format!(" {}={}", key, value));
             }
@@ -68,5 +68,31 @@ impl Element {
         }
         jtml.push_str("}");
         jtml
+    }
+}
+
+// test
+#[cfg(test)]
+mod test {
+
+    use super::{AstNode, Attributes, Children, Element};
+
+    #[test]
+    fn element() {
+        let element = Element {
+            tag_name: "p".to_string(),
+            attributes: Attributes::new(),
+            children: Children::new(),
+        };
+        assert_eq!(element.to_html(false), "<p></p>");
+        assert_eq!(element.to_jtml(false), "p(){}");
+
+        let element = Element {
+            tag_name: "p".to_string(),
+            attributes: Attributes::new(),
+            children: Children::from(vec![AstNode::Text("test".to_string())]),
+        };
+        assert_eq!(element.to_html(false), "<p>test</p>");
+        assert_eq!(element.to_jtml(false), "p(){test}")
     }
 }

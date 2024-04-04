@@ -5,11 +5,9 @@ use std::fs;
 use std::io::Write;
 use std::path::Path;
 
-use jtml::lexer::lexer;
-use jtml::parser::{
-    parser, Child, Document,
-    {element::Attribute, element::Attributes, element::Children, Element},
-};
+use jtml::jtml_lexer::lexer;
+
+use jtml::jtml_parser::parser::jtml_parser;
 use structopt::StructOpt;
 #[derive(StructOpt)]
 struct Cli {
@@ -64,7 +62,7 @@ fn format(text: String) -> Result<String, String> {
         }
     });
 
-    let ast = match parser(&mut tokens) {
+    let ast = match jtml_parser(&mut tokens) {
         Ok(ast) => ast,
         Err(e) => return Err(e.to_string()),
     };
