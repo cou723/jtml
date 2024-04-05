@@ -4,6 +4,36 @@ use std::{
     fmt::{self, Display},
 };
 
+#[derive(Debug, PartialEq, Clone)]
+pub enum Kind {
+    StringLiteral,
+    Comment,
+    Identifier,
+    LeftBracket,
+    RightBracket,
+    LeftParen,
+    RightParen,
+    Equal,
+    Whitespace,
+}
+
+// fromは使わないが、jtml tokenとkindの対応を明示、変更時に気付くようにするために実装
+impl From<JtmlToken> for Kind {
+    fn from(token: JtmlToken) -> Self {
+        match token {
+            JtmlToken::StringLiteral(_) => Kind::StringLiteral,
+            JtmlToken::Comment(_) => Kind::Comment,
+            JtmlToken::Identifier(_) => Kind::Identifier,
+            JtmlToken::LeftBracket => Kind::LeftBracket,
+            JtmlToken::RightBracket => Kind::RightBracket,
+            JtmlToken::LeftParen => Kind::LeftParen,
+            JtmlToken::RightParen => Kind::RightParen,
+            JtmlToken::Equal => Kind::Equal,
+            JtmlToken::Whitespace => Kind::Whitespace,
+        }
+    }
+}
+
 #[derive(Logos, Debug, PartialEq, Clone)]
 pub enum JtmlToken {
     #[regex(r#""([^"\\]|\\t|\\u|\\n|\\")*""#, |lex| lex.slice().to_string())]

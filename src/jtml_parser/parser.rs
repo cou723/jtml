@@ -9,29 +9,31 @@ mod ast_nodes_parser;
 mod attributes_parser;
 mod document_parser;
 mod one_token_parser;
-pub fn jtml_parser(tokens: &mut VecDeque<JtmlToken>) -> Result<document::Document, ParserError> {
-    document_parser::parser(tokens)
+pub fn jtml_parser(
+    tokens: &mut VecDeque<JtmlToken>,
+) -> Result<document::DocumentNode, ParserError> {
+    document_parser::parse(tokens)
 }
 
 #[cfg(test)]
 mod test {
-    use test::document::Document;
+    use test::document::DocumentNode;
 
     use super::*;
     use std::collections::VecDeque;
 
     use crate::{
         jtml_lexer::test_utils::lexer,
-        jtml_parser::{ast_node::AstNode, element::Element},
+        jtml_parser::{ast_node::AstNode, element::ElementNode},
     };
 
     #[test]
-    fn test_node_with_contents() {
+    fn node_with_contents() {
         let mut tokens = lexer(r#"p(){"hello""world"}"#);
         let result = ast_node_parser::parse(&mut tokens);
         assert_eq!(
             result.unwrap(),
-            AstNode::Element(Element {
+            AstNode::Element(ElementNode {
                 tag_name: "p".to_string(),
                 attributes: VecDeque::from(vec![]),
                 children: VecDeque::from(vec![
@@ -43,20 +45,20 @@ mod test {
     }
 
     #[test]
-    fn test_document() {
+    fn document() {
         let mut tokens = lexer(r#"h1(){}p(){}"#);
-        let result = document_parser::parser(&mut tokens);
+        let result = document_parser::parse(&mut tokens);
 
         assert_eq!(
             result.unwrap(),
-            Document {
+            DocumentNode {
                 elements: VecDeque::from(vec![
-                    AstNode::Element(Element {
+                    AstNode::Element(ElementNode {
                         tag_name: "h1".to_string(),
                         attributes: VecDeque::from(vec![]),
                         children: VecDeque::from(vec![])
                     }),
-                    AstNode::Element(Element {
+                    AstNode::Element(ElementNode {
                         tag_name: "p".to_string(),
                         attributes: VecDeque::from(vec![]),
                         children: VecDeque::from(vec![])
@@ -67,20 +69,20 @@ mod test {
     }
 
     #[test]
-    fn test_comment() {
+    fn comment() {
         let mut tokens = lexer(r#"h1(){}p(){}"#);
-        let result = document_parser::parser(&mut tokens);
+        let result = document_parser::parse(&mut tokens);
 
         assert_eq!(
             result.unwrap(),
-            Document {
+            DocumentNode {
                 elements: VecDeque::from(vec![
-                    AstNode::Element(Element {
+                    AstNode::Element(ElementNode {
                         tag_name: "h1".to_string(),
                         attributes: VecDeque::from(vec![]),
                         children: VecDeque::from(vec![])
                     }),
-                    AstNode::Element(Element {
+                    AstNode::Element(ElementNode {
                         tag_name: "p".to_string(),
                         attributes: VecDeque::from(vec![]),
                         children: VecDeque::from(vec![])

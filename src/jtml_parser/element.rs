@@ -7,13 +7,13 @@ pub type Attributes = VecDeque<Attribute>;
 
 pub type Children = VecDeque<AstNode>;
 #[derive(Debug, Clone, PartialEq)]
-pub struct Element {
+pub struct ElementNode {
     pub tag_name: String,
     pub attributes: Attributes,
     pub children: Children,
 }
 
-impl Element {
+impl ElementNode {
     pub(crate) fn to_html(&self, ignore_comment: bool) -> String {
         let empty_elements = vec![
             "br", "hr", "img", "input", "meta", "area", "base", "col", "embed", "keygen", "link",
@@ -75,11 +75,11 @@ impl Element {
 #[cfg(test)]
 mod test {
 
-    use super::{AstNode, Attributes, Children, Element};
+    use super::{AstNode, Attributes, Children, ElementNode};
 
     #[test]
     fn element() {
-        let element = Element {
+        let element = ElementNode {
             tag_name: "p".to_string(),
             attributes: Attributes::new(),
             children: Children::new(),
@@ -87,7 +87,7 @@ mod test {
         assert_eq!(element.to_html(false), "<p></p>");
         assert_eq!(element.to_jtml(false), "p(){}");
 
-        let element = Element {
+        let element = ElementNode {
             tag_name: "p".to_string(),
             attributes: Attributes::new(),
             children: Children::from(vec![AstNode::Text("test".to_string())]),

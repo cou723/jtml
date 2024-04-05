@@ -1,4 +1,7 @@
-use crate::{jtml_lexer::JtmlToken, jtml_parser::parser_error::ParserError};
+use crate::{
+    jtml_lexer::{JtmlToken, Kind},
+    jtml_parser::parser_error::ParserError,
+};
 
 use std::collections::VecDeque;
 
@@ -20,44 +23,39 @@ fn parse_attribute(tokens: &mut VecDeque<JtmlToken>) -> Result<(String, String),
             JtmlToken::Identifier(key) => key.clone(),
             _ => {
                 return Err(ParserError::UnexpectedToken(
-                    JtmlToken::Identifier("".to_string()),
-                    tokens[0].to_string(),
+                    Kind::Identifier,
+                    tokens[0].clone(),
+                    None,
                 ))
             }
         },
-        None => {
-            return Err(ParserError::TokenIsNotEnough(JtmlToken::Identifier(
-                "attribute key".to_string(),
-            )))
-        }
+        None => return Err(ParserError::TokenIsNotEnough(vec![Kind::Identifier])),
     };
     match tokens.get(1) {
         Some(token) => match token {
             JtmlToken::Equal => (),
             _ => {
                 return Err(ParserError::UnexpectedToken(
-                    JtmlToken::Equal,
-                    tokens[1].to_string(),
+                    Kind::Equal,
+                    tokens[1].clone(),
+                    None,
                 ))
             }
         },
-        None => return Err(ParserError::TokenIsNotEnough(JtmlToken::Equal)),
+        None => return Err(ParserError::TokenIsNotEnough(vec![Kind::Equal])),
     };
     let value = match tokens.get(2) {
         Some(token) => match token {
             JtmlToken::StringLiteral(_value) => _value.clone(),
             _ => {
                 return Err(ParserError::UnexpectedToken(
-                    JtmlToken::StringLiteral("string literal".to_string()),
-                    tokens[2].to_string(),
+                    Kind::StringLiteral,
+                    tokens[2].clone(),
+                    None,
                 ))
             }
         },
-        None => {
-            return Err(ParserError::TokenIsNotEnough(JtmlToken::StringLiteral(
-                "attribute value".to_string(),
-            )))
-        }
+        None => return Err(ParserError::TokenIsNotEnough(vec![Kind::StringLiteral])),
     };
     tokens.pop_front();
     tokens.pop_front();

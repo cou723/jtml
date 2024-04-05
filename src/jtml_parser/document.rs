@@ -3,11 +3,11 @@ use super::ast_node::AstNode;
 use std::collections::VecDeque;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Document {
+pub struct DocumentNode {
     pub elements: VecDeque<AstNode>,
 }
 
-impl Document {
+impl DocumentNode {
     pub fn to_html(&self, ignore_comment: bool) -> String {
         let mut html = String::new();
         for element in &self.elements {
