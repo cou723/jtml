@@ -1,13 +1,18 @@
 use std::fmt::{Display, Formatter, Result};
 
-pub(crate) enum HtmlGeneratorError {
-    UnexpectedToken(String),
+use crate::{jtml_lexer::LexerError, jtml_parser::parser_error::ParserError};
+
+#[derive(Debug, PartialEq)]
+pub enum HtmlGeneratorError {
+    ParseError(ParserError),
+    LexerError(LexerError),
 }
 
 impl Display for HtmlGeneratorError {
     fn fmt(&self, f: &mut Formatter) -> Result {
         match self {
-            HtmlGeneratorError::UnexpectedToken(s) => write!(f, "Unexpected token: {}", s),
+            HtmlGeneratorError::ParseError(e) => write!(f, "{:?}", e),
+            HtmlGeneratorError::LexerError(e) => write!(f, "{:?}", e),
         }
     }
 }

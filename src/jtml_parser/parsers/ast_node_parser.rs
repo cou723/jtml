@@ -8,6 +8,7 @@ use crate::jtml_lexer::Kind;
 use crate::jtml_parser::ast_node::AstNode;
 
 use crate::jtml_lexer::JtmlToken;
+use crate::jtml_parser::element::is_self_terminating_tag;
 use crate::jtml_parser::element::ElementNode;
 
 use std::collections::VecDeque;
@@ -15,7 +16,6 @@ use std::collections::VecDeque;
 pub(crate) fn parse(tokens: &mut VecDeque<JtmlToken>) -> Result<AstNode, ParserError> {
     // elementの場合はelement_nameを取得
     // StringLiteral, Commentの場合はそのまま返す
-    println!("{:?}", tokens);
     let element_name = match tokens.front() {
         Some(token) => match token {
             JtmlToken::StringLiteral(text) => {
@@ -47,15 +47,17 @@ pub(crate) fn parse(tokens: &mut VecDeque<JtmlToken>) -> Result<AstNode, ParserE
     };
     tokens.pop_front();
 
-    println!("b {:?}", tokens);
-
     one_token_parser::parse(JtmlToken::LeftParen, tokens)?;
-    println!("b {:?}", tokens);
-
     let attributes = attributes_parser::parse(tokens)?;
-    println!("at {:?}", tokens);
     one_token_parser::parse(JtmlToken::RightParen, tokens)?;
 
+    if is_self_terminating_tag(&element_name) {
+        return Ok(AstNode::Element(ElementNode {
+            tag_name: element_name,
+            attributes: attributes,
+            children: VecDeque::from(vec![]),
+        }));
+    }
     one_token_parser::parse(JtmlToken::LeftBracket, tokens)?;
     let children = ast_nodes_parser::parse(tokens).0;
     one_token_parser::parse(JtmlToken::RightBracket, tokens)?;
@@ -74,7 +76,7 @@ mod test {
     use crate::jtml_lexer::test_utils::lexer;
     use crate::jtml_lexer::Kind;
     use crate::jtml_parser::parser_error::ParserError;
-    use crate::jtml_parser::{ast_node::AstNode, element::ElementNode, parser::ast_node_parser};
+    use crate::jtml_parser::{ast_node::AstNode, element::ElementNode, parsers::ast_node_parser};
 
     #[test]
     fn element() {
@@ -90,6 +92,21 @@ mod test {
         );
     }
 
+    // 未実装
+    // #[test]
+    // fn element_non_child() {
+    //     let mut tokens = lexer(r#"img()"#);
+    //     let result = ast_node_parser::parse(&mut tokens);
+    //     assert_eq!(
+    //         result.unwrap(),
+    //         AstNode::Element(ElementNode {
+    //             tag_name: "img".to_string(),
+    //             attributes: VecDeque::from(vec![]),
+    //             children: VecDeque::from(vec![])
+    //         })
+    //     );
+    // }
+
     #[test]
     fn element_with_attribute() {
         let mut tokens = lexer(r#"p(width="100"){}"#);
@@ -98,7 +115,7 @@ mod test {
             result.unwrap(),
             AstNode::Element(ElementNode {
                 tag_name: "p".to_string(),
-                attributes: VecDeque::from(vec![("width".to_string(), r#""100""#.to_string())]),
+                attributes: VecDeque::from(vec![("width".to_string(), "100".to_string())]),
                 children: VecDeque::from(vec![])
             })
         );
@@ -113,7 +130,7 @@ mod test {
             AstNode::Element(ElementNode {
                 tag_name: "p".to_string(),
                 attributes: VecDeque::from(vec![]),
-                children: VecDeque::from(vec![AstNode::Text("\"hello\"".to_string())])
+                children: VecDeque::from(vec![AstNode::Text("hello".to_string())])
             })
         );
     }
@@ -132,14 +149,14 @@ mod test {
                     AstNode::Element(ElementNode {
                         tag_name: "p".to_string(),
                         attributes: VecDeque::from(vec![]),
-                        children: VecDeque::from(vec![AstNode::Text("\"test\"".to_string())])
+                        children: VecDeque::from(vec![AstNode::Text("test".to_string())])
                     }),
                     AstNode::Element(ElementNode {
                         tag_name: "p".to_string(),
                         attributes: VecDeque::from(vec![]),
                         children: VecDeque::from(vec![
-                            AstNode::Text("\"test1\"".to_string()),
-                            AstNode::Text("\"test2\"".to_string())
+                            AstNode::Text("test1".to_string()),
+                            AstNode::Text("test2".to_string())
                         ])
                     })
                 ])

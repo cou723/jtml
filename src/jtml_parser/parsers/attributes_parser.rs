@@ -69,14 +69,14 @@ mod test {
 
     use crate::{
         jtml_lexer::test_utils::lexer,
-        jtml_parser::parser::attributes_parser::{self, parse_attribute},
+        jtml_parser::parsers::attributes_parser::{self, parse_attribute},
     };
 
     #[test]
     fn test_attribute() {
         let mut tokens = lexer(r#"id="text""#);
         let result = parse_attribute(&mut tokens);
-        assert_eq!(result.unwrap(), ("id".to_string(), "\"text\"".to_string()));
+        assert_eq!(result.unwrap(), ("id".to_string(), "text".to_string()));
     }
 
     #[test]
@@ -86,8 +86,8 @@ mod test {
         assert_eq!(
             result.unwrap(),
             VecDeque::from(vec![
-                ("id".to_string(), "\"text\"".to_string()),
-                ("id2".to_string(), "\"text2\"".to_string())
+                ("id".to_string(), "text".to_string()),
+                ("id2".to_string(), "text2".to_string())
             ])
         );
     }

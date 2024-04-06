@@ -1,5 +1,7 @@
 use crate::jtml_parser::element::ElementNode;
 
+use super::convert::Convert;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum AstNode {
     Element(ElementNode),
@@ -7,11 +9,11 @@ pub enum AstNode {
     Comment(String),
 }
 
-impl AstNode {
-    pub(crate) fn to_html(&self, ignore_comment: bool) -> String {
+impl Convert for AstNode {
+    fn to_html(&self, ignore_comment: bool) -> String {
         match self {
             AstNode::Element(element) => element.to_html(ignore_comment),
-            AstNode::Text(text) => text.clone().trim_matches('"').to_string(),
+            AstNode::Text(text) => text.to_string(),
             AstNode::Comment(text) => {
                 if ignore_comment {
                     return "".to_string();
@@ -21,10 +23,10 @@ impl AstNode {
         }
     }
 
-    pub(crate) fn to_jtml(&self, ignore_comment: bool) -> String {
+    fn to_jtml(&self, ignore_comment: bool) -> String {
         match self {
             AstNode::Element(element) => element.to_jtml(ignore_comment),
-            AstNode::Text(text) => text.clone().trim_matches('"').to_string(),
+            AstNode::Text(text) => format!("\"{}\"", text),
             AstNode::Comment(text) => {
                 if ignore_comment {
                     return "".to_string();
@@ -40,6 +42,8 @@ impl AstNode {
 mod test {
     // Elementはより下位のモジュールでテストしているため、ここでは使用しない
     //
+
+    use crate::jtml_parser::convert::Convert;
 
     use super::AstNode;
 
@@ -73,9 +77,9 @@ mod test {
     #[test]
     fn jtml_text() {
         let comment = AstNode::Text("".to_string());
-        assert_eq!(comment.to_jtml(false), "");
+        assert_eq!(comment.to_jtml(false), "\"\"");
 
         let comment = AstNode::Text("".to_string());
-        assert_eq!(comment.to_jtml(false), "");
+        assert_eq!(comment.to_jtml(false), "\"\"");
     }
 }

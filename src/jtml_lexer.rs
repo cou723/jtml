@@ -36,7 +36,7 @@ impl From<JtmlToken> for Kind {
 
 #[derive(Logos, Debug, PartialEq, Clone)]
 pub enum JtmlToken {
-    #[regex(r#""([^"\\]|\\t|\\u|\\n|\\")*""#, |lex| lex.slice().to_string())]
+    #[regex(r#""([^"\\]|\\t|\\u|\\n|\\")*""#, |lex| lex.slice().trim_matches('"').to_string())]
     StringLiteral(String),
 
     // #[regex(r#"/\*[^*/]*\*/"#)]
@@ -84,20 +84,28 @@ impl Display for JtmlToken {
     }
 }
 
-pub fn lexer(text: String) -> Result<VecDeque<JtmlToken>, String> {
+#[derive(Debug, PartialEq, Eq)]
+pub enum LexerError {
+    InvalidToken(String),
+}
+
+pub fn lexer(text: String) -> Result<VecDeque<JtmlToken>, LexerError> {
     let mut result: VecDeque<JtmlToken> = VecDeque::new();
     let mut lexer = JtmlToken::lexer(text.as_str());
     while let Some(token) = lexer.next() {
         match token {
             Ok(token) => result.push_back(token),
-            Err(_) => return Err(format!("Invalid token: {}", lexer.slice())),
+            Err(_) => return Err(LexerError::InvalidToken(lexer.slice().to_string())),
         }
     }
     return Ok(result);
 }
 
+#[cfg(test)]
 mod test {
     use std::collections::VecDeque;
+
+    use crate::jtml_lexer::LexerError;
 
     use super::JtmlToken;
 
@@ -113,7 +121,7 @@ mod test {
         assert_eq!(parsed.len(), 1);
         assert_eq!(
             parsed.pop_front().unwrap(),
-            JtmlToken::StringLiteral(r#""""#.to_string())
+            JtmlToken::StringLiteral(r#""#.to_string())
         );
     }
 
@@ -123,20 +131,20 @@ mod test {
         assert_eq!(parsed.len(), 1);
         assert_eq!(
             parsed.pop_front().unwrap(),
-            JtmlToken::StringLiteral(r#""string""#.to_string())
+            JtmlToken::StringLiteral(r#"string"#.to_string())
         );
     }
 
     #[test]
     fn invalid_string_literal() {
         let error = super::lexer("\"string".to_string()).unwrap_err();
-        assert_eq!(error, "Invalid token: \"string");
+        assert_eq!(error, LexerError::InvalidToken("\"string".to_string()));
     }
 
     #[test]
     fn invalid_string_literal_not_terminal() {
         let error = super::lexer("string\"".to_string()).unwrap_err();
-        assert_eq!(error, "Invalid token: \"");
+        assert_eq!(error, LexerError::InvalidToken("\"".to_string()));
     }
 
     #[test]
@@ -148,7 +156,7 @@ mod test {
     #[test]
     fn invalid_line_comment() {
         let error = super::lexer((r#"/ comment"#).to_string()).unwrap_err();
-        assert_eq!(error, "Invalid token: /");
+        assert_eq!(error, LexerError::InvalidToken("/".to_string()));
     }
 
     #[test]
@@ -162,7 +170,7 @@ mod test {
         assert_eq!(parsed.pop_front().unwrap(), JtmlToken::Equal);
         assert_eq!(
             parsed.pop_front().unwrap(),
-            JtmlToken::StringLiteral(r#""value""#.to_string())
+            JtmlToken::StringLiteral(r#"value"#.to_string())
         );
     }
 
@@ -179,7 +187,7 @@ mod test {
         assert_eq!(parsed.pop_front().unwrap(), JtmlToken::Equal);
         assert_eq!(
             parsed.pop_front().unwrap(),
-            JtmlToken::StringLiteral(r#""value""#.to_string())
+            JtmlToken::StringLiteral(r#"value"#.to_string())
         );
         assert_eq!(parsed.pop_front().unwrap(), JtmlToken::RightParen);
     }
@@ -196,7 +204,7 @@ mod test {
         assert_eq!(parsed.pop_front().unwrap(), JtmlToken::Equal);
         assert_eq!(
             parsed.pop_front().unwrap(),
-            JtmlToken::StringLiteral(r#""value""#.to_string())
+            JtmlToken::StringLiteral(r#"value"#.to_string())
         );
 
         assert_eq!(
@@ -206,7 +214,7 @@ mod test {
         assert_eq!(parsed.pop_front().unwrap(), JtmlToken::Equal);
         assert_eq!(
             parsed.pop_front().unwrap(),
-            JtmlToken::StringLiteral(r#""value""#.to_string())
+            JtmlToken::StringLiteral(r#"value"#.to_string())
         );
 
         assert_eq!(parsed.pop_front().unwrap(), JtmlToken::RightParen);
@@ -219,7 +227,7 @@ mod test {
         assert_eq!(parsed.pop_front().unwrap(), JtmlToken::LeftBracket);
         assert_eq!(
             parsed.pop_front().unwrap(),
-            JtmlToken::StringLiteral(r#""test""#.to_string())
+            JtmlToken::StringLiteral(r#"test"#.to_string())
         );
         assert_eq!(parsed.pop_front().unwrap(), JtmlToken::RightBracket);
     }
@@ -251,7 +259,7 @@ mod test {
         assert_eq!(parsed.pop_front().unwrap(), JtmlToken::LeftBracket);
         assert_eq!(
             parsed.pop_front().unwrap(),
-            JtmlToken::StringLiteral(r#""test""#.to_string())
+            JtmlToken::StringLiteral(r#"test"#.to_string())
         );
         assert_eq!(parsed.pop_front().unwrap(), JtmlToken::RightBracket);
     }
@@ -274,7 +282,7 @@ mod test {
 
         assert_eq!(
             parsed.pop_front().unwrap(),
-            JtmlToken::StringLiteral(r#""value""#.to_string())
+            JtmlToken::StringLiteral(r#"value"#.to_string())
         );
 
         assert_eq!(parsed.pop_front().unwrap(), JtmlToken::RightParen);
@@ -298,14 +306,14 @@ mod test {
         assert_eq!(parsed.pop_front().unwrap(), JtmlToken::Equal);
         assert_eq!(
             parsed.pop_front().unwrap(),
-            JtmlToken::StringLiteral(r#""value""#.to_string())
+            JtmlToken::StringLiteral(r#"value"#.to_string())
         );
         assert_eq!(parsed.pop_front().unwrap(), JtmlToken::RightParen);
         assert_eq!(parsed.pop_front().unwrap(), JtmlToken::LeftBracket);
 
         assert_eq!(
             parsed.pop_front().unwrap(),
-            JtmlToken::StringLiteral(r#""test""#.to_string())
+            JtmlToken::StringLiteral(r#"test"#.to_string())
         );
 
         assert_eq!(parsed.pop_front().unwrap(), JtmlToken::RightBracket);

@@ -1,13 +1,8 @@
-// このフォーマッターはコメントを消してしまう。続きを作成する場合はprettierを利用したformatterを開発する。
-
-use std::collections::VecDeque;
 use std::fs;
 use std::io::Write;
 use std::path::Path;
 
-use jtml::jtml_lexer::lexer;
-
-use jtml::jtml_parser::parser::jtml_parser;
+use jtml::formatter;
 use structopt::StructOpt;
 #[derive(StructOpt)]
 struct Cli {
@@ -33,7 +28,7 @@ fn main() -> Result<(), anyhow::Error> {
             }
         };
         // convert
-        let formatted = match format(file_text) {
+        let formatted = match formatter::format(file_text) {
             Ok(converted) => converted,
             Err(e) => {
                 eprintln!("Error compiling '{}' ({})", filename, e);
@@ -52,21 +47,6 @@ fn main() -> Result<(), anyhow::Error> {
         file.write(formatted.as_bytes())?;
     }
     Ok(())
-}
-
-fn format(text: String) -> Result<String, String> {
-    let mut tokens = VecDeque::from(match lexer(text) {
-        Ok(tokens) => tokens,
-        Err(e) => {
-            return Err(e.to_string());
-        }
-    });
-
-    let ast = match jtml_parser(&mut tokens) {
-        Ok(ast) => ast,
-        Err(e) => return Err(e.to_string()),
-    };
-    Ok(ast.to_jtml(false))
 }
 
 // --- Formatter trait ---

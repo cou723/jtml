@@ -9,9 +9,7 @@ mod ast_nodes_parser;
 mod attributes_parser;
 mod document_parser;
 mod one_token_parser;
-pub fn jtml_parser(
-    tokens: &mut VecDeque<JtmlToken>,
-) -> Result<document::DocumentNode, ParserError> {
+pub fn parse(tokens: &mut VecDeque<JtmlToken>) -> Result<document::DocumentNode, ParserError> {
     document_parser::parse(tokens)
 }
 
@@ -37,9 +35,27 @@ mod test {
                 tag_name: "p".to_string(),
                 attributes: VecDeque::from(vec![]),
                 children: VecDeque::from(vec![
-                    AstNode::Text("\"hello\"".to_string()),
-                    AstNode::Text("\"world\"".to_string())
+                    AstNode::Text("hello".to_string()),
+                    AstNode::Text("world".to_string())
                 ])
+            })
+        );
+    }
+
+    #[test]
+    fn node_with_child_elements() {
+        let mut tokens = lexer(r#"p(){p(){"hello"}}"#);
+        let result = ast_node_parser::parse(&mut tokens);
+        assert_eq!(
+            result.unwrap(),
+            AstNode::Element(ElementNode {
+                tag_name: "p".to_string(),
+                attributes: VecDeque::from(vec![]),
+                children: VecDeque::from(vec![AstNode::Element(ElementNode {
+                    tag_name: "p".to_string(),
+                    attributes: VecDeque::from(vec![]),
+                    children: VecDeque::from(vec![AstNode::Text("hello".to_string())])
+                })])
             })
         );
     }

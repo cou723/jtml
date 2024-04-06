@@ -26,8 +26,8 @@ mod test {
     use crate::{
         jtml_lexer::{test_utils::lexer, Kind},
         jtml_parser::{
-            ast_node::AstNode, element::ElementNode, parser::ast_nodes_parser,
-            parser_error::ParserError,
+            ast_node::AstNode, element::ElementNode, parser_error::ParserError,
+            parsers::ast_nodes_parser,
         },
     };
 
@@ -79,11 +79,11 @@ mod test {
         assert_eq!(
             parsed,
             VecDeque::from(vec![
-                AstNode::Text("\"stringliteral\"".to_string()),
+                AstNode::Text("stringliteral".to_string()),
                 AstNode::Element(ElementNode {
                     tag_name: "p".to_string(),
-                    attributes: VecDeque::from(vec![("a".to_string(), "\"b\"".to_string())]),
-                    children: VecDeque::from(vec![AstNode::Text("\"child\"".to_string())])
+                    attributes: VecDeque::from(vec![("a".to_string(), "b".to_string())]),
+                    children: VecDeque::from(vec![AstNode::Text("child".to_string())])
                 }),
                 AstNode::Comment("comment".to_string()),
                 AstNode::Element(ElementNode {
