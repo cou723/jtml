@@ -1,14 +1,13 @@
-use crate::jtml_parser::ast_node::AstNode;
-
 use crate::jtml_lexer::JtmlToken;
 use crate::jtml_parser::parser_error::ParserError;
 
 use std::collections::VecDeque;
 
 use super::ast_node_parser;
+use super::nodes::ast::Node;
 
-pub(crate) fn parse(tokens: &mut VecDeque<JtmlToken>) -> (VecDeque<AstNode>, ParserError) {
-    let mut elements: VecDeque<AstNode> = VecDeque::new();
+pub(crate) fn parse(tokens: &mut VecDeque<JtmlToken>) -> (VecDeque<Node>, ParserError) {
+    let mut elements: VecDeque<Node> = VecDeque::new();
     loop {
         match ast_node_parser::parse(tokens) {
             Ok(e) => {
@@ -26,8 +25,11 @@ mod test {
     use crate::{
         jtml_lexer::{test_utils::lexer, Kind},
         jtml_parser::{
-            ast_node::AstNode, element::ElementNode, parser_error::ParserError,
-            parsers::ast_nodes_parser,
+            parser_error::ParserError,
+            parsers::{
+                ast_nodes_parser,
+                nodes::ast::{self, element::Node},
+            },
         },
     };
 
@@ -47,12 +49,12 @@ mod test {
         assert_eq!(
             parsed,
             VecDeque::from(vec![
-                AstNode::Element(ElementNode {
+                ast::Node::Element(Node {
                     tag_name: "p".to_string(),
                     attributes: VecDeque::from(vec![]),
                     children: VecDeque::from(vec![])
                 }),
-                AstNode::Element(ElementNode {
+                ast::Node::Element(Node {
                     tag_name: "p".to_string(),
                     attributes: VecDeque::from(vec![]),
                     children: VecDeque::from(vec![])
@@ -79,14 +81,14 @@ mod test {
         assert_eq!(
             parsed,
             VecDeque::from(vec![
-                AstNode::Text("stringliteral".to_string()),
-                AstNode::Element(ElementNode {
+                ast::Node::Text("stringliteral".to_string()),
+                ast::Node::Element(Node {
                     tag_name: "p".to_string(),
                     attributes: VecDeque::from(vec![("a".to_string(), "b".to_string())]),
-                    children: VecDeque::from(vec![AstNode::Text("child".to_string())])
+                    children: VecDeque::from(vec![ast::Node::Text("child".to_string())])
                 }),
-                AstNode::Comment("comment".to_string()),
-                AstNode::Element(ElementNode {
+                ast::Node::Comment("comment".to_string()),
+                ast::Node::Element(Node {
                     tag_name: "p".to_string(),
                     attributes: VecDeque::from(vec![]),
                     children: VecDeque::from(vec![])

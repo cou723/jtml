@@ -4,7 +4,7 @@ use crate::{
     html_generator_error::HtmlGeneratorError, jtml_lexer::lexer, jtml_parser::parsers::parse,
 };
 
-pub fn from_jtml(jtml: String, ignore_comment: bool) -> Result<String, HtmlGeneratorError> {
+pub fn convert(jtml: String, ignore_comment: bool) -> Result<String, HtmlGeneratorError> {
     let mut tokens = VecDeque::from(match lexer(jtml) {
         Ok(tokens) => tokens,
         Err(e) => {
@@ -21,44 +21,44 @@ pub fn from_jtml(jtml: String, ignore_comment: bool) -> Result<String, HtmlGener
 
 #[cfg(test)]
 mod test {
-    use super::from_jtml;
+    use super::convert;
 
     #[test]
     fn single_simple_element() {
         use super::*;
-        let result = from_jtml("p(){}".to_string(), false);
+        let result = convert("p(){}".to_string(), false);
         assert_eq!(result.unwrap(), "<p></p>".to_string());
 
-        let result = from_jtml("img()".to_string(), false);
+        let result = convert("img()".to_string(), false);
         assert_eq!(result.unwrap(), "<img/>".to_string());
 
-        let result = from_jtml("\"string literal\"".to_string(), false);
+        let result = convert("\"string literal\"".to_string(), false);
         assert_eq!(result.unwrap(), "string literal".to_string());
 
-        let result = from_jtml("// comment".to_string(), false);
+        let result = convert("// comment".to_string(), false);
         assert_eq!(result.unwrap(), "<!--comment-->".to_string());
     }
 
     #[test]
     fn single_element_with_attribute() {
         use super::*;
-        let result = from_jtml("p(class=\"btn\"){}".to_string(), false).unwrap();
+        let result = convert("p(class=\"btn\"){}".to_string(), false).unwrap();
         assert_eq!(result, "<p class=\"btn\"></p>".to_string());
 
-        let result = from_jtml("img(href=\"./images/img.png\")".to_string(), false).unwrap();
+        let result = convert("img(href=\"./images/img.png\")".to_string(), false).unwrap();
         assert_eq!(result, "<img href=\"./images/img.png\"/>".to_string());
     }
 
     #[test]
     fn single_element_with_child() {
         use super::*;
-        let result = from_jtml(r#"p(){p(){"hello"}}"#.to_string(), false).unwrap();
+        let result = convert(r#"p(){p(){"hello"}}"#.to_string(), false).unwrap();
         assert_eq!(result, "<p><p>hello</p></p>".to_string());
     }
 
     #[test]
     fn example_head() {
-        let result = from_jtml(
+        let result = convert(
             r#"
 head(){
     meta(charset="UTF-8")
@@ -77,7 +77,7 @@ head(){
 
     #[test]
     fn normal() {
-        let result = from_jtml(
+        let result = convert(
             r#"
 html(lang="ja"){
     head(){

@@ -3,7 +3,7 @@ mod html_generator_error;
 pub mod jtml_lexer;
 pub mod jtml_parser;
 
-use html_generator::from_jtml;
+use html_generator::convert;
 use std::fs;
 use std::io::Write;
 use std::path::Path;
@@ -34,7 +34,7 @@ fn main() -> Result<(), anyhow::Error> {
         };
 
         // convert
-        let html = match from_jtml(file_text, true) {
+        let html = match convert(file_text, true) {
             Ok(converted) => converted,
             Err(e) => {
                 eprintln!("Error compiling '{}' ({})", filename, e);

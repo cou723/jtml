@@ -1,42 +1,13 @@
-use super::{ast_node::AstNode, convert::Convert};
+use crate::jtml_parser::convert::Convert;
 
 use std::collections::VecDeque;
 
-pub type Attribute = (String, String);
+use super::attributes::Attributes;
+use crate::jtml_parser::parsers::nodes::ast;
 
-impl Convert for Attribute {
-    fn to_html(&self, _: bool) -> String {
-        return format!("{}=\"{}\"", self.0, self.1);
-    }
-
-    fn to_jtml(&self, _: bool) -> String {
-        return format!("{}=\"{}\"", self.0, self.1);
-    }
-}
-
-pub type Attributes = VecDeque<Attribute>;
-
-impl Convert for Attributes {
-    fn to_html(&self, ignore_comment: bool) -> String {
-        let mut html: Vec<String> = Vec::new();
-        for attribute in self {
-            html.push(attribute.to_html(ignore_comment));
-        }
-        return html.join(" ");
-    }
-
-    fn to_jtml(&self, ignore_comment: bool) -> String {
-        let mut jtml: Vec<String> = Vec::new();
-        for attribute in self {
-            jtml.push(attribute.to_html(ignore_comment));
-        }
-        return jtml.join(" ");
-    }
-}
-
-pub type Children = VecDeque<AstNode>;
+pub type Children = VecDeque<ast::Node>;
 #[derive(Debug, Clone, PartialEq)]
-pub struct ElementNode {
+pub struct Node {
     pub tag_name: String,
     pub attributes: Attributes,
     pub children: Children,
@@ -50,7 +21,7 @@ pub fn is_self_terminating_tag(tag_name: &String) -> bool {
     empty_elements.contains(&tag_name.as_str())
 }
 
-impl Convert for ElementNode {
+impl Convert for Node {
     fn to_html(&self, ignore_comment: bool) -> String {
         let attributes = match self.attributes.to_html(ignore_comment).as_str() {
             "" => "".to_string(),
@@ -101,12 +72,15 @@ impl Convert for ElementNode {
 #[cfg(test)]
 mod test {
 
-    use super::{AstNode, Attributes, Children, ElementNode};
-    use crate::jtml_parser::element::Convert;
+    use super::{Attributes, Children};
+    use crate::jtml_parser::{
+        convert::Convert,
+        parsers::nodes::ast::{self, element},
+    };
 
     #[test]
     fn element() {
-        let element = ElementNode {
+        let element = element::Node {
             tag_name: "p".to_string(),
             attributes: Attributes::new(),
             children: Children::new(),
@@ -114,10 +88,10 @@ mod test {
         assert_eq!(element.to_html(false), "<p></p>");
         assert_eq!(element.to_jtml(false), "p(){}");
 
-        let element = ElementNode {
+        let element = element::Node {
             tag_name: "p".to_string(),
             attributes: Attributes::new(),
-            children: Children::from(vec![AstNode::Text("test".to_string())]),
+            children: Children::from(vec![ast::Node::Text("test".to_string())]),
         };
         assert_eq!(element.to_html(false), "<p>test</p>");
         assert_eq!(element.to_jtml(false), "p(){\"test\"}")
@@ -125,7 +99,7 @@ mod test {
 
     #[test]
     fn element_with_attribute() {
-        let element = ElementNode {
+        let element = element::Node {
             tag_name: "p".to_string(),
             attributes: Attributes::from(vec![("class".to_string(), "btn".to_string())]),
             children: Children::new(),
@@ -133,7 +107,7 @@ mod test {
         assert_eq!(element.to_html(false), "<p class=\"btn\"></p>");
         assert_eq!(element.to_jtml(false), "p(class=\"btn\"){}");
 
-        let element = ElementNode {
+        let element = element::Node {
             tag_name: "img".to_string(),
             attributes: Attributes::from(vec![(
                 "href".to_string(),
@@ -147,18 +121,18 @@ mod test {
 
     #[test]
     fn element_with_child() {
-        let element = ElementNode {
+        let element = element::Node {
             tag_name: "p".to_string(),
             attributes: Attributes::new(),
-            children: Children::from(vec![AstNode::Text("test".to_string())]),
+            children: Children::from(vec![ast::Node::Text("test".to_string())]),
         };
         assert_eq!(element.to_html(false), "<p>test</p>");
         assert_eq!(element.to_jtml(false), r#"p(){"test"}"#);
 
-        let element = ElementNode {
+        let element = element::Node {
             tag_name: "p".to_string(),
             attributes: Attributes::new(),
-            children: Children::from(vec![AstNode::Element(ElementNode {
+            children: Children::from(vec![ast::Node::Element(element::Node {
                 tag_name: "p".to_string(),
                 attributes: Attributes::new(),
                 children: Children::new(),
@@ -167,23 +141,23 @@ mod test {
         assert_eq!(element.to_html(false), "<p><p></p></p>");
         assert_eq!(element.to_jtml(false), "p(){p(){}}");
 
-        let element = ElementNode {
+        let element = element::Node {
             tag_name: "p".to_string(),
             attributes: Attributes::new(),
             children: Children::from(vec![
-                AstNode::Text("test".to_string()),
-                AstNode::Text("test".to_string()),
+                ast::Node::Text("test".to_string()),
+                ast::Node::Text("test".to_string()),
             ]),
         };
         assert_eq!(element.to_html(false), "<p>testtest</p>");
         assert_eq!(element.to_jtml(false), r#"p(){"test""test"}"#);
 
-        let element = ElementNode {
+        let element = element::Node {
             tag_name: "p".to_string(),
             attributes: Attributes::new(),
             children: Children::from(vec![
-                AstNode::Text("test".to_string()),
-                AstNode::Element(ElementNode {
+                ast::Node::Text("test".to_string()),
+                ast::Node::Element(element::Node {
                     tag_name: "p".to_string(),
                     attributes: Attributes::new(),
                     children: Children::new(),
