@@ -1,8 +1,6 @@
 use std::collections::VecDeque;
 
-use crate::{
-    html_generator_error::HtmlGeneratorError, jtml_lexer::lexer, jtml_parser::parsers::parse,
-};
+use crate::{html_generator_error::HtmlGeneratorError, jtml_lexer::lexer, jtml_parser::parse};
 
 pub fn convert(jtml: String, ignore_comment: bool) -> Result<String, HtmlGeneratorError> {
     let mut tokens = VecDeque::from(match lexer(jtml) {

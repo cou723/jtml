@@ -1,6 +1,6 @@
 use crate::{
     jtml_lexer::{JtmlToken, Kind},
-    jtml_parser::parser_error::ParserError,
+    jtml_parser::ParserError,
 };
 
 use std::collections::VecDeque;
@@ -69,7 +69,7 @@ mod test {
 
     use crate::{
         jtml_lexer::test_utils::lexer,
-        jtml_parser::parsers::attributes_parser::{self, parse_attribute},
+        jtml_parser::parsers::attributes::{self, parse_attribute},
     };
 
     #[test]
@@ -82,7 +82,7 @@ mod test {
     #[test]
     fn test_attributes() {
         let mut tokens = lexer(r#"id="text" id2="text2""#);
-        let result = attributes_parser::parse(&mut tokens);
+        let result = attributes::parse(&mut tokens);
         assert_eq!(
             result.unwrap(),
             VecDeque::from(vec![
@@ -95,7 +95,7 @@ mod test {
     #[test]
     fn test_empty_attributes() {
         let mut tokens = lexer(r#""#);
-        let result = attributes_parser::parse(&mut tokens);
+        let result = attributes::parse(&mut tokens);
         assert_eq!(result.unwrap(), VecDeque::from(vec![]));
     }
 }

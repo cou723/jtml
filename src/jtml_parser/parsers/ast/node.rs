@@ -1,11 +1,12 @@
 use crate::jtml_parser::convert::Convert;
 
-mod attributes;
-pub mod element;
+mod element;
+
+pub use element::Element;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Node {
-    Element(element::Node),
+    Element(Element),
     Text(String),
     Comment(String),
 }

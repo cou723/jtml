@@ -1,6 +1,6 @@
 use std::fmt::{Display, Formatter, Result};
 
-use crate::{jtml_lexer::LexerError, jtml_parser::parser_error::ParserError};
+use crate::{jtml_lexer::LexerError, jtml_parser::ParserError};
 
 #[derive(Debug, PartialEq)]
 pub enum HtmlGeneratorError {

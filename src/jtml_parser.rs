@@ -1,3 +1,5 @@
 pub mod convert;
-pub mod parser_error;
-pub mod parsers;
+mod parser_errors;
+mod parsers;
+pub use parser_errors::ParserError;
+pub use parsers::parse;

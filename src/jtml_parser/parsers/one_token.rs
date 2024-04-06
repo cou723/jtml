@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use crate::{jtml_lexer::JtmlToken, jtml_parser::parser_error::ParserError};
+use crate::{jtml_lexer::JtmlToken, jtml_parser::ParserError};
 
 pub(crate) fn parse(
     expect: JtmlToken,

@@ -1,27 +1,22 @@
-use crate::jtml_parser::convert::Convert;
+use crate::jtml_parser::{convert::Convert, parsers::is_self_terminating_tag};
 
 use std::collections::VecDeque;
 
-use super::attributes::Attributes;
-use crate::jtml_parser::parsers::nodes::ast;
+mod attributes;
 
-pub type Children = VecDeque<ast::Node>;
+use self::attributes::Attributes;
+
+use super::Node;
+
+pub type Children = VecDeque<Node>;
 #[derive(Debug, Clone, PartialEq)]
-pub struct Node {
+pub struct Element {
     pub tag_name: String,
     pub attributes: Attributes,
     pub children: Children,
 }
 
-pub fn is_self_terminating_tag(tag_name: &String) -> bool {
-    let empty_elements = vec![
-        "br", "hr", "img", "input", "meta", "area", "base", "col", "embed", "keygen", "link",
-        "param", "source",
-    ];
-    empty_elements.contains(&tag_name.as_str())
-}
-
-impl Convert for Node {
+impl Convert for Element {
     fn to_html(&self, ignore_comment: bool) -> String {
         let attributes = match self.attributes.to_html(ignore_comment).as_str() {
             "" => "".to_string(),
@@ -72,15 +67,16 @@ impl Convert for Node {
 #[cfg(test)]
 mod test {
 
-    use super::{Attributes, Children};
     use crate::jtml_parser::{
         convert::Convert,
-        parsers::nodes::ast::{self, element},
+        parsers::ast::{node::Element, Node},
     };
+
+    use super::{Attributes, Children};
 
     #[test]
     fn element() {
-        let element = element::Node {
+        let element = Element {
             tag_name: "p".to_string(),
             attributes: Attributes::new(),
             children: Children::new(),
@@ -88,10 +84,10 @@ mod test {
         assert_eq!(element.to_html(false), "<p></p>");
         assert_eq!(element.to_jtml(false), "p(){}");
 
-        let element = element::Node {
+        let element = Element {
             tag_name: "p".to_string(),
             attributes: Attributes::new(),
-            children: Children::from(vec![ast::Node::Text("test".to_string())]),
+            children: Children::from(vec![Node::Text("test".to_string())]),
         };
         assert_eq!(element.to_html(false), "<p>test</p>");
         assert_eq!(element.to_jtml(false), "p(){\"test\"}")
@@ -99,7 +95,7 @@ mod test {
 
     #[test]
     fn element_with_attribute() {
-        let element = element::Node {
+        let element = Element {
             tag_name: "p".to_string(),
             attributes: Attributes::from(vec![("class".to_string(), "btn".to_string())]),
             children: Children::new(),
@@ -107,7 +103,7 @@ mod test {
         assert_eq!(element.to_html(false), "<p class=\"btn\"></p>");
         assert_eq!(element.to_jtml(false), "p(class=\"btn\"){}");
 
-        let element = element::Node {
+        let element = Element {
             tag_name: "img".to_string(),
             attributes: Attributes::from(vec![(
                 "href".to_string(),
@@ -121,18 +117,18 @@ mod test {
 
     #[test]
     fn element_with_child() {
-        let element = element::Node {
+        let element = Element {
             tag_name: "p".to_string(),
             attributes: Attributes::new(),
-            children: Children::from(vec![ast::Node::Text("test".to_string())]),
+            children: Children::from(vec![Node::Text("test".to_string())]),
         };
         assert_eq!(element.to_html(false), "<p>test</p>");
         assert_eq!(element.to_jtml(false), r#"p(){"test"}"#);
 
-        let element = element::Node {
+        let element = Element {
             tag_name: "p".to_string(),
             attributes: Attributes::new(),
-            children: Children::from(vec![ast::Node::Element(element::Node {
+            children: Children::from(vec![Node::Element(Element {
                 tag_name: "p".to_string(),
                 attributes: Attributes::new(),
                 children: Children::new(),
@@ -141,23 +137,23 @@ mod test {
         assert_eq!(element.to_html(false), "<p><p></p></p>");
         assert_eq!(element.to_jtml(false), "p(){p(){}}");
 
-        let element = element::Node {
+        let element = Element {
             tag_name: "p".to_string(),
             attributes: Attributes::new(),
             children: Children::from(vec![
-                ast::Node::Text("test".to_string()),
-                ast::Node::Text("test".to_string()),
+                Node::Text("te".to_string()),
+                Node::Text("st".to_string()),
             ]),
         };
-        assert_eq!(element.to_html(false), "<p>testtest</p>");
-        assert_eq!(element.to_jtml(false), r#"p(){"test""test"}"#);
+        assert_eq!(element.to_html(false), "<p>test</p>");
+        assert_eq!(element.to_jtml(false), r#"p(){"te""st"}"#);
 
-        let element = element::Node {
+        let element = Element {
             tag_name: "p".to_string(),
             attributes: Attributes::new(),
             children: Children::from(vec![
-                ast::Node::Text("test".to_string()),
-                ast::Node::Element(element::Node {
+                Node::Text("test".to_string()),
+                Node::Element(Element {
                     tag_name: "p".to_string(),
                     attributes: Attributes::new(),
                     children: Children::new(),

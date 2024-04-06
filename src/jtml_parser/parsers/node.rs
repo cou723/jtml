@@ -1,19 +1,18 @@
-use super::ast_nodes_parser;
-use super::attributes_parser;
-use super::nodes::ast;
-use super::nodes::ast::element;
-use super::nodes::ast::element::is_self_terminating_tag;
-use super::one_token_parser;
-
-use super::super::parser_error::ParserError;
-
 use crate::jtml_lexer::Kind;
 
 use crate::jtml_lexer::JtmlToken;
+use crate::jtml_parser::parsers::ast::node::Element;
+use crate::jtml_parser::parsers::ast::Node;
+use crate::jtml_parser::parsers::attributes;
+use crate::jtml_parser::parsers::is_self_terminating_tag;
+use crate::jtml_parser::parsers::one_token;
+use crate::jtml_parser::ParserError;
 
 use std::collections::VecDeque;
 
-pub(crate) fn parse(tokens: &mut VecDeque<JtmlToken>) -> Result<ast::Node, ParserError> {
+use super::nodes;
+
+pub(crate) fn parse(tokens: &mut VecDeque<JtmlToken>) -> Result<Node, ParserError> {
     // elementの場合はelement_nameを取得
     // StringLiteral, Commentの場合はそのまま返す
     let element_name = match tokens.front() {
@@ -21,12 +20,12 @@ pub(crate) fn parse(tokens: &mut VecDeque<JtmlToken>) -> Result<ast::Node, Parse
             JtmlToken::StringLiteral(text) => {
                 let new_text = text.clone();
                 tokens.pop_front();
-                return Ok(ast::Node::Text(new_text));
+                return Ok(Node::Text(new_text));
             }
             JtmlToken::Comment(text) => {
                 let new_text = text.clone();
                 tokens.pop_front();
-                return Ok(ast::Node::Comment(new_text));
+                return Ok(Node::Comment(new_text));
             }
             JtmlToken::Identifier(id) => id.clone(),
             _ => {
@@ -47,22 +46,22 @@ pub(crate) fn parse(tokens: &mut VecDeque<JtmlToken>) -> Result<ast::Node, Parse
     };
     tokens.pop_front();
 
-    one_token_parser::parse(JtmlToken::LeftParen, tokens)?;
-    let attributes = attributes_parser::parse(tokens)?;
-    one_token_parser::parse(JtmlToken::RightParen, tokens)?;
+    one_token::parse(JtmlToken::LeftParen, tokens)?;
+    let attributes = attributes::parse(tokens)?;
+    one_token::parse(JtmlToken::RightParen, tokens)?;
 
     if is_self_terminating_tag(&element_name) {
-        return Ok(ast::Node::Element(element::Node {
+        return Ok(Node::Element(Element {
             tag_name: element_name,
             attributes: attributes,
             children: VecDeque::from(vec![]),
         }));
     }
-    one_token_parser::parse(JtmlToken::LeftBracket, tokens)?;
-    let children = ast_nodes_parser::parse(tokens).0;
-    one_token_parser::parse(JtmlToken::RightBracket, tokens)?;
+    one_token::parse(JtmlToken::LeftBracket, tokens)?;
+    let children = nodes::parse(tokens).0;
+    one_token::parse(JtmlToken::RightBracket, tokens)?;
 
-    Ok(ast::Node::Element(element::Node {
+    Ok(Node::Element(Element {
         tag_name: element_name,
         attributes: attributes,
         children: children,
@@ -75,18 +74,17 @@ mod test {
 
     use crate::jtml_lexer::test_utils::lexer;
     use crate::jtml_lexer::Kind;
-    use crate::jtml_parser::parser_error::ParserError;
-    use crate::jtml_parser::parsers::ast_node_parser;
-    use crate::jtml_parser::parsers::nodes::ast;
-    use crate::jtml_parser::parsers::nodes::ast::element::Node;
+    use crate::jtml_parser::parser_errors::ParserError;
+    use crate::jtml_parser::parsers::ast::node::{Element, Node};
+    use crate::jtml_parser::parsers::node;
 
     #[test]
     fn element() {
         let mut tokens = lexer(r#"p(){}"#);
-        let result = ast_node_parser::parse(&mut tokens);
+        let result = node::parse(&mut tokens);
         assert_eq!(
             result.unwrap(),
-            ast::Node::Element(Node {
+            Node::Element(Element {
                 tag_name: "p".to_string(),
                 attributes: VecDeque::from(vec![]),
                 children: VecDeque::from(vec![])
@@ -112,10 +110,10 @@ mod test {
     #[test]
     fn element_with_attribute() {
         let mut tokens = lexer(r#"p(width="100"){}"#);
-        let result = ast_node_parser::parse(&mut tokens);
+        let result = node::parse(&mut tokens);
         assert_eq!(
             result.unwrap(),
-            ast::Node::Element(Node {
+            Node::Element(Element {
                 tag_name: "p".to_string(),
                 attributes: VecDeque::from(vec![("width".to_string(), "100".to_string())]),
                 children: VecDeque::from(vec![])
@@ -125,14 +123,14 @@ mod test {
     #[test]
     fn element_with_string() {
         let mut tokens = lexer(r#"p(){"hello"}"#);
-        let result = ast_node_parser::parse(&mut tokens);
+        let result = node::parse(&mut tokens);
 
         assert_eq!(
             result.unwrap(),
-            ast::Node::Element(Node {
+            Node::Element(Element {
                 tag_name: "p".to_string(),
                 attributes: VecDeque::from(vec![]),
-                children: VecDeque::from(vec![ast::Node::Text("hello".to_string())])
+                children: VecDeque::from(vec![Node::Text("hello".to_string())])
             })
         );
     }
@@ -140,25 +138,25 @@ mod test {
     #[test]
     fn node_with_child_node() {
         let mut tokens = lexer(r#"p(){p(){"test"}p(){"test1""test2"}}}"#);
-        let result = ast_node_parser::parse(&mut tokens);
+        let result = node::parse(&mut tokens);
 
         assert_eq!(
             result.unwrap(),
-            ast::Node::Element(Node {
+            Node::Element(Element {
                 tag_name: "p".to_string(),
                 attributes: VecDeque::from(vec![]),
                 children: VecDeque::from(vec![
-                    ast::Node::Element(Node {
+                    Node::Element(Element {
                         tag_name: "p".to_string(),
                         attributes: VecDeque::from(vec![]),
-                        children: VecDeque::from(vec![ast::Node::Text("test".to_string())])
+                        children: VecDeque::from(vec![Node::Text("test".to_string())])
                     }),
-                    ast::Node::Element(Node {
+                    Node::Element(Element {
                         tag_name: "p".to_string(),
                         attributes: VecDeque::from(vec![]),
                         children: VecDeque::from(vec![
-                            ast::Node::Text("test1".to_string()),
-                            ast::Node::Text("test2".to_string())
+                            Node::Text("test1".to_string()),
+                            Node::Text("test2".to_string())
                         ])
                     })
                 ])
@@ -169,7 +167,7 @@ mod test {
     #[test]
     fn invalid_element_right_bracket() {
         let mut tokens = lexer(r#"p(){"#);
-        let result = ast_node_parser::parse(&mut tokens);
+        let result = node::parse(&mut tokens);
         assert_eq!(
             result.unwrap_err(),
             ParserError::TokenIsNotEnough(vec![Kind::RightBracket])
@@ -179,7 +177,7 @@ mod test {
     #[test]
     fn invalid_element_left_bracket() {
         let mut tokens = lexer(r#"p()"#);
-        let result = ast_node_parser::parse(&mut tokens);
+        let result = node::parse(&mut tokens);
         assert_eq!(
             result.unwrap_err(),
             ParserError::TokenIsNotEnough(vec![Kind::LeftBracket])
@@ -189,7 +187,7 @@ mod test {
     #[test]
     fn invalid_element_right_paren() {
         let mut tokens = lexer(r#"p("#);
-        let result = ast_node_parser::parse(&mut tokens);
+        let result = node::parse(&mut tokens);
         assert_eq!(
             result.unwrap_err(),
             ParserError::TokenIsNotEnough(vec![Kind::RightParen])
@@ -199,7 +197,7 @@ mod test {
     #[test]
     fn invalid_element_left_paren() {
         let mut tokens = lexer(r#"p)"#);
-        let result = ast_node_parser::parse(&mut tokens);
+        let result = node::parse(&mut tokens);
         assert_eq!(
             result.unwrap_err(),
             ParserError::UnexpectedToken(

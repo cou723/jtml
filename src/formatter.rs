@@ -10,7 +10,7 @@ pub fn format(text: String) -> Result<String, HtmlGeneratorError> {
         }
     });
 
-    let ast = match jtml_parser::parsers::parse(&mut tokens) {
+    let ast = match jtml_parser::parse(&mut tokens) {
         Ok(ast) => ast,
         Err(e) => return Err(HtmlGeneratorError::ParseError(e)),
     };
