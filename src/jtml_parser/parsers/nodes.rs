@@ -25,7 +25,7 @@ mod test {
     use crate::{
         jtml_lexer::{test_utils::lexer, Kind},
         jtml_parser::{
-            parser_errors::ParserError,
+            errors::ParserError,
             parsers::{
                 ast::{node::Element, Node},
                 nodes,

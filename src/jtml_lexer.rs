@@ -17,7 +17,6 @@ pub enum Kind {
     Whitespace,
 }
 
-// fromは使わないが、jtml tokenとkindの対応を明示、変更時に気付くようにするために実装
 impl From<JtmlToken> for Kind {
     fn from(token: JtmlToken) -> Self {
         match token {

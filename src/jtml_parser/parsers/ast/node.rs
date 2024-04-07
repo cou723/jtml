@@ -1,8 +1,8 @@
-use crate::jtml_parser::convert::Convert;
-
 mod element;
 
 pub use element::Element;
+
+use crate::html_converter::Convert;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Node {
@@ -45,7 +45,7 @@ mod test {
     // Elementはより下位のモジュールでテストしているため、ここでは使用しない
     //
 
-    use crate::jtml_parser::convert::Convert;
+    use crate::html_converter::Convert;
 
     use super::Node;
 

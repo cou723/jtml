@@ -1,14 +1,10 @@
-use crate::jtml_parser::{convert::Convert, parsers::is_self_terminating_tag};
-
-use std::collections::VecDeque;
+use crate::{html_converter::Convert, jtml_parser::parsers::is_self_terminating_tag};
 
 mod attributes;
+mod children;
 
-use self::attributes::Attributes;
+use self::{attributes::Attributes, children::Children};
 
-use super::Node;
-
-pub type Children = VecDeque<Node>;
 #[derive(Debug, Clone, PartialEq)]
 pub struct Element {
     pub tag_name: String,
@@ -53,11 +49,7 @@ impl Convert for Element {
                 "{}({}){{{}}}",
                 self.tag_name,
                 self.attributes.to_jtml(ignore_comment),
-                self.children
-                    .iter()
-                    .map(|child| (child.to_jtml(ignore_comment).clone()))
-                    .collect::<Vec<String>>()
-                    .concat(),
+                self.children.to_jtml(ignore_comment)
             )
         }
     }
@@ -67,9 +59,9 @@ impl Convert for Element {
 #[cfg(test)]
 mod test {
 
-    use crate::jtml_parser::{
-        convert::Convert,
-        parsers::ast::{node::Element, Node},
+    use crate::{
+        html_converter::Convert,
+        jtml_parser::parsers::ast::{node::Element, Node},
     };
 
     use super::{Attributes, Children};
@@ -90,7 +82,7 @@ mod test {
             children: Children::from(vec![Node::Text("test".to_string())]),
         };
         assert_eq!(element.to_html(false), "<p>test</p>");
-        assert_eq!(element.to_jtml(false), "p(){\"test\"}")
+        assert_eq!(element.to_jtml(false), "p(){\n\"test\"\n}")
     }
 
     #[test]
@@ -123,7 +115,12 @@ mod test {
             children: Children::from(vec![Node::Text("test".to_string())]),
         };
         assert_eq!(element.to_html(false), "<p>test</p>");
-        assert_eq!(element.to_jtml(false), r#"p(){"test"}"#);
+        assert_eq!(
+            element.to_jtml(false),
+            r#"p(){
+"test"
+}"#
+        );
 
         let element = Element {
             tag_name: "p".to_string(),
@@ -135,7 +132,12 @@ mod test {
             })]),
         };
         assert_eq!(element.to_html(false), "<p><p></p></p>");
-        assert_eq!(element.to_jtml(false), "p(){p(){}}");
+        assert_eq!(
+            element.to_jtml(false),
+            r#"p(){
+p(){}
+}"#
+        );
 
         let element = Element {
             tag_name: "p".to_string(),
@@ -146,7 +148,13 @@ mod test {
             ]),
         };
         assert_eq!(element.to_html(false), "<p>test</p>");
-        assert_eq!(element.to_jtml(false), r#"p(){"te""st"}"#);
+        assert_eq!(
+            element.to_jtml(false),
+            r#"p(){
+"te"
+"st"
+}"#
+        );
 
         let element = Element {
             tag_name: "p".to_string(),
@@ -161,6 +169,6 @@ mod test {
             ]),
         };
         assert_eq!(element.to_html(false), "<p>test<p></p></p>");
-        assert_eq!(element.to_jtml(false), "p(){\"test\"p(){}}");
+        assert_eq!(element.to_jtml(false), "p(){\n\"test\"\np(){}\n}");
     }
 }

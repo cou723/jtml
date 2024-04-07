@@ -74,7 +74,7 @@ mod test {
 
     use crate::jtml_lexer::test_utils::lexer;
     use crate::jtml_lexer::Kind;
-    use crate::jtml_parser::parser_errors::ParserError;
+    use crate::jtml_parser::errors::ParserError;
     use crate::jtml_parser::parsers::ast::node::{Element, Node};
     use crate::jtml_parser::parsers::node;
 

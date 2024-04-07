@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use crate::jtml_parser::convert::Convert;
+use crate::html_converter::Convert;
 
 pub type Attribute = (String, String);
 

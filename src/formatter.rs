@@ -1,18 +1,18 @@
 use std::collections::VecDeque;
 
-use crate::{html_generator_error::HtmlGeneratorError, jtml_lexer::lexer, jtml_parser};
+use crate::{html_converter::HtmlConverterError, jtml_lexer::lexer, jtml_parser};
 
-pub fn format(text: String) -> Result<String, HtmlGeneratorError> {
+pub fn format(text: String) -> Result<String, HtmlConverterError> {
     let mut tokens = VecDeque::from(match lexer(text) {
         Ok(tokens) => tokens,
         Err(e) => {
-            return Err(HtmlGeneratorError::LexerError(e));
+            return Err(HtmlConverterError::LexerError(e));
         }
     });
 
     let ast = match jtml_parser::parse(&mut tokens) {
         Ok(ast) => ast,
-        Err(e) => return Err(HtmlGeneratorError::ParseError(e)),
+        Err(e) => return Err(HtmlConverterError::ParseError(e)),
     };
     Ok(ast.to_jtml(false))
 }
@@ -50,7 +50,15 @@ mod test {
     fn single_element_with_child() {
         use super::*;
         let result = format(r#"p(){p(){"hello"}}"#.to_string()).unwrap();
-        assert_eq!(result, r#"p(){p(){"hello"}}"#.to_string());
+        assert_eq!(
+            result,
+            r#"p(){
+p(){
+"hello"
+}
+}"#
+            .to_string()
+        );
     }
 
     #[test]
@@ -68,11 +76,12 @@ head(){
         .unwrap();
         assert_eq!(
             result,
-            r#"
-head(){
-    meta(charset="UTF-8")
-    meta(http-equiv="X-UA-Compatible" content="IE=edge")
-    title(){"document"}
+            r#"head(){
+meta(charset="UTF-8")
+meta(http-equiv="X-UA-Compatible" content="IE=edge")
+title(){
+"document"
+}
 }"#
         )
     }
@@ -102,22 +111,24 @@ html(lang="ja"){
 
         assert_eq!(
             result,
-            r#"
-html(lang="ja"){
-    head(){
-        meta(charset="UTF-8")
-        meta(http-equiv="X-UA-Compatible" content="IE=edge")
-        meta(name="viewport" content="width=device-width" initial-scale="1.0")
-        title(){"document"}
-    }
-    body(){
-        main(){
-            h1(){"Hello World!"}
-            img(hoge="hoge" huga="huga")
-        }
-    }
+            r#"html(lang="ja"){
+head(){
+meta(charset="UTF-8")
+meta(http-equiv="X-UA-Compatible" content="IE=edge")
+meta(name="viewport" content="width=device-width" initial-scale="1.0")
+title(){
+"document"
+}
+}
+body(){
+main(){
+h1(){
+"Hello World!"
+}
+img(hoge="hoge" huga="huga")
+}
+}
 }"#
-            .replace("\n", "")
             .to_string()
         )
     }

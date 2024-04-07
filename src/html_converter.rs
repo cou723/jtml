@@ -1,18 +1,22 @@
 use std::collections::VecDeque;
 
-use crate::{html_generator_error::HtmlGeneratorError, jtml_lexer::lexer, jtml_parser::parse};
+mod convert;
+mod errors;
+use crate::{jtml_lexer::lexer, jtml_parser::parse};
+pub use convert::Convert;
+pub use errors::HtmlConverterError;
 
-pub fn convert(jtml: String, ignore_comment: bool) -> Result<String, HtmlGeneratorError> {
+pub fn convert(jtml: String, ignore_comment: bool) -> Result<String, HtmlConverterError> {
     let mut tokens = VecDeque::from(match lexer(jtml) {
         Ok(tokens) => tokens,
         Err(e) => {
-            return Err(HtmlGeneratorError::LexerError(e));
+            return Err(HtmlConverterError::LexerError(e));
         }
     });
 
     let ast = match parse(&mut tokens) {
         Ok(ast) => ast,
-        Err(e) => return Err(HtmlGeneratorError::ParseError(e)),
+        Err(e) => return Err(HtmlConverterError::ParseError(e)),
     };
     Ok(ast.to_html(ignore_comment))
 }

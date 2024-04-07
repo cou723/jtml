@@ -1,4 +1,4 @@
-use super::super::parser_errors::ParserError;
+use super::super::errors::ParserError;
 use super::{nodes, AstRoot};
 
 use crate::jtml_lexer::JtmlToken;

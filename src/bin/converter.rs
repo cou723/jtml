@@ -1,9 +1,4 @@
-mod html_generator;
-mod html_generator_error;
-pub mod jtml_lexer;
-pub mod jtml_parser;
-
-use html_generator::convert;
+use jtml::html_converter::convert;
 use std::fs;
 use std::io::Write;
 use std::path::Path;
