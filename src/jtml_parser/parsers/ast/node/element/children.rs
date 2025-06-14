@@ -11,14 +11,14 @@ impl Convert for Children {
             .collect::<String>()
     }
 
-    fn to_jtml(&self, ignore_comment: bool) -> String {
+    fn to_jtml(&self, ignore_comment: bool, indent_depth: usize) -> String {
         if self.len() == 0 {
             "".to_string()
         } else {
             format!(
-                "\n{}\n",
+                "\n{}",
                 self.iter()
-                    .map(|element| element.to_jtml(ignore_comment))
+                    .map(|element| element.to_jtml(ignore_comment, indent_depth + 1))
                     .collect::<Vec<String>>()
                     .join("\n")
             )

@@ -24,7 +24,7 @@ mod test {
     fn single_simple_element() {
         use super::*;
         let result = format("p(){}".to_string());
-        assert_eq!(result.unwrap(), "p(){}".to_string());
+        assert_eq!(result.unwrap(), "p(){\n}".to_string());
 
         let result = format("img()".to_string());
         assert_eq!(result.unwrap(), "img()".to_string());
@@ -40,7 +40,7 @@ mod test {
     fn single_element_with_attribute() {
         use super::*;
         let result = format("p(class=\"btn\"){}".to_string()).unwrap();
-        assert_eq!(result, "p(class=\"btn\"){}".to_string());
+        assert_eq!(result, "p(class=\"btn\"){\n}".to_string());
 
         let result = format("img(href=\"./images/img.png\")".to_string()).unwrap();
         assert_eq!(result, "img(href=\"./images/img.png\")".to_string());
@@ -53,9 +53,9 @@ mod test {
         assert_eq!(
             result,
             r#"p(){
-p(){
-"hello"
-}
+    p(){
+        "hello"
+    }
 }"#
             .to_string()
         );
@@ -77,11 +77,11 @@ head(){
         assert_eq!(
             result,
             r#"head(){
-meta(charset="UTF-8")
-meta(http-equiv="X-UA-Compatible" content="IE=edge")
-title(){
-"document"
-}
+    meta(charset="UTF-8")
+    meta(http-equiv="X-UA-Compatible" content="IE=edge")
+    title(){
+        "document"
+    }
 }"#
         )
     }
@@ -112,22 +112,22 @@ html(lang="ja"){
         assert_eq!(
             result,
             r#"html(lang="ja"){
-head(){
-meta(charset="UTF-8")
-meta(http-equiv="X-UA-Compatible" content="IE=edge")
-meta(name="viewport" content="width=device-width" initial-scale="1.0")
-title(){
-"document"
-}
-}
-body(){
-main(){
-h1(){
-"Hello World!"
-}
-img(hoge="hoge" huga="huga")
-}
-}
+    head(){
+        meta(charset="UTF-8")
+        meta(http-equiv="X-UA-Compatible" content="IE=edge")
+        meta(name="viewport" content="width=device-width" initial-scale="1.0")
+        title(){
+            "document"
+        }
+    }
+    body(){
+        main(){
+            h1(){
+                "Hello World!"
+            }
+            img(hoge="hoge" huga="huga")
+        }
+    }
 }"#
             .to_string()
         )

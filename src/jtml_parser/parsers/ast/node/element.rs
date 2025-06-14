@@ -36,20 +36,23 @@ impl Convert for Element {
         }
     }
 
-    fn to_jtml(&self, ignore_comment: bool) -> String {
+    fn to_jtml(&self, ignore_comment: bool, indent_depth: usize) -> String {
         // 子要素を持たない要素の場合
         if is_self_terminating_tag(&self.tag_name) {
             format!(
-                "{}({})",
+                "{}{}({})",
+                "    ".repeat(indent_depth),
                 self.tag_name,
-                self.attributes.to_jtml(ignore_comment)
+                self.attributes.to_jtml(ignore_comment, indent_depth)
             )
         } else {
             format!(
-                "{}({}){{{}}}",
+                "{}{}({}){{{}\n{}}}",
+                "    ".repeat(indent_depth),
                 self.tag_name,
-                self.attributes.to_jtml(ignore_comment),
-                self.children.to_jtml(ignore_comment)
+                self.attributes.to_jtml(ignore_comment, indent_depth),
+                self.children.to_jtml(ignore_comment, indent_depth),
+                "    ".repeat(indent_depth),
             )
         }
     }
@@ -74,7 +77,7 @@ mod test {
             children: Children::new(),
         };
         assert_eq!(element.to_html(false), "<p></p>");
-        assert_eq!(element.to_jtml(false), "p(){}");
+        assert_eq!(element.to_jtml(false, 0), "p(){\n}");
 
         let element = Element {
             tag_name: "p".to_string(),
@@ -82,7 +85,7 @@ mod test {
             children: Children::from(vec![Node::Text("test".to_string())]),
         };
         assert_eq!(element.to_html(false), "<p>test</p>");
-        assert_eq!(element.to_jtml(false), "p(){\n\"test\"\n}")
+        assert_eq!(element.to_jtml(false, 0), "p(){\n    \"test\"\n}")
     }
 
     #[test]
@@ -93,7 +96,7 @@ mod test {
             children: Children::new(),
         };
         assert_eq!(element.to_html(false), "<p class=\"btn\"></p>");
-        assert_eq!(element.to_jtml(false), "p(class=\"btn\"){}");
+        assert_eq!(element.to_jtml(false, 0), "p(class=\"btn\"){\n}");
 
         let element = Element {
             tag_name: "img".to_string(),
@@ -104,7 +107,7 @@ mod test {
             children: Children::new(),
         };
         assert_eq!(element.to_html(false), "<img href=\"./images/img.png\"/>");
-        assert_eq!(element.to_jtml(false), "img(href=\"./images/img.png\")");
+        assert_eq!(element.to_jtml(false, 0), "img(href=\"./images/img.png\")");
     }
 
     #[test]
@@ -116,9 +119,9 @@ mod test {
         };
         assert_eq!(element.to_html(false), "<p>test</p>");
         assert_eq!(
-            element.to_jtml(false),
+            element.to_jtml(false, 0),
             r#"p(){
-"test"
+    "test"
 }"#
         );
 
@@ -133,9 +136,10 @@ mod test {
         };
         assert_eq!(element.to_html(false), "<p><p></p></p>");
         assert_eq!(
-            element.to_jtml(false),
+            element.to_jtml(false, 0),
             r#"p(){
-p(){}
+    p(){
+    }
 }"#
         );
 
@@ -149,10 +153,10 @@ p(){}
         };
         assert_eq!(element.to_html(false), "<p>test</p>");
         assert_eq!(
-            element.to_jtml(false),
+            element.to_jtml(false, 0),
             r#"p(){
-"te"
-"st"
+    "te"
+    "st"
 }"#
         );
 
@@ -169,6 +173,13 @@ p(){}
             ]),
         };
         assert_eq!(element.to_html(false), "<p>test<p></p></p>");
-        assert_eq!(element.to_jtml(false), "p(){\n\"test\"\np(){}\n}");
+        assert_eq!(
+            element.to_jtml(false, 0),
+            r#"p(){
+    "test"
+    p(){
+    }
+}"#
+        );
     }
 }

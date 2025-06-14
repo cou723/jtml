@@ -25,15 +25,15 @@ impl Convert for Node {
         }
     }
 
-    fn to_jtml(&self, ignore_comment: bool) -> String {
+    fn to_jtml(&self, ignore_comment: bool, indent_depth: usize) -> String {
         match self {
-            Node::Element(element) => element.to_jtml(ignore_comment),
-            Node::Text(text) => format!("\"{}\"", text),
+            Node::Element(element) => element.to_jtml(ignore_comment, indent_depth),
+            Node::Text(text) => format!("{}\"{}\"", "    ".repeat(indent_depth), text),
             Node::Comment(text) => {
                 if ignore_comment {
                     return "".to_string();
                 }
-                format!("// {}", text)
+                format!("{}// {}", "    ".repeat(indent_depth), text)
             }
         }
     }
@@ -61,10 +61,10 @@ mod test {
     #[test]
     fn jtml_comment() {
         let comment = Node::Comment("".to_string());
-        assert_eq!(comment.to_jtml(false), "// ");
+        assert_eq!(comment.to_jtml(false, 0), "// ");
 
         let comment = Node::Comment("comment".to_string());
-        assert_eq!(comment.to_jtml(false), "// comment");
+        assert_eq!(comment.to_jtml(false, 0), "// comment");
     }
 
     #[test]
@@ -79,9 +79,9 @@ mod test {
     #[test]
     fn jtml_text() {
         let comment = Node::Text("".to_string());
-        assert_eq!(comment.to_jtml(false), "\"\"");
+        assert_eq!(comment.to_jtml(false, 0), "\"\"");
 
         let comment = Node::Text("".to_string());
-        assert_eq!(comment.to_jtml(false), "\"\"");
+        assert_eq!(comment.to_jtml(false, 0), "\"\"");
     }
 }

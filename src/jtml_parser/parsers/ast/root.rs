@@ -20,7 +20,7 @@ impl AstRoot {
     pub fn to_jtml(&self, ignore_comment: bool) -> String {
         self.elements
             .iter()
-            .map(|element| element.to_jtml(ignore_comment))
+            .map(|element| element.to_jtml(ignore_comment, 0))
             .collect::<Vec<String>>()
             .join("\n")
     }
