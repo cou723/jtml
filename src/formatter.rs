@@ -2,6 +2,27 @@ use std::collections::VecDeque;
 
 use crate::{html_converter::HtmlConverterError, jtml_lexer::lexer, jtml_parser};
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum Tab {
+    Spaces(usize),
+    Tabs,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct FormatConfig {
+    pub indent: Tab,
+    pub ignore_comment: bool,
+}
+
+impl FormatConfig {
+    pub fn get_indent_text(&self, depth: usize) -> String {
+        match self.indent {
+            Tab::Spaces(size) => " ".repeat(size * depth),
+            Tab::Tabs => "\t".repeat(depth),
+        }
+    }
+}
+
 pub fn format(text: String) -> Result<String, HtmlConverterError> {
     let mut tokens = VecDeque::from(match lexer(text) {
         Ok(tokens) => tokens,
@@ -14,7 +35,11 @@ pub fn format(text: String) -> Result<String, HtmlConverterError> {
         Ok(ast) => ast,
         Err(e) => return Err(HtmlConverterError::ParseError(e)),
     };
-    Ok(ast.to_jtml(false))
+    let config = FormatConfig {
+        indent: Tab::Spaces(4),
+        ignore_comment: false,
+    };
+    Ok(ast.to_jtml(false, &config))
 }
 
 #[cfg(test)]

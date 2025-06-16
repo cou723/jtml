@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use crate::{html_converter::Convert, jtml_parser::parsers::ast::Node};
+use crate::{formatter::FormatConfig, html_converter::Convert, jtml_parser::parsers::ast::Node};
 
 pub type Children = VecDeque<Node>;
 
@@ -11,14 +11,14 @@ impl Convert for Children {
             .collect::<String>()
     }
 
-    fn to_jtml(&self, ignore_comment: bool, indent_depth: usize) -> String {
+    fn to_jtml(&self, ignore_comment: bool, indent_depth: usize, config: &FormatConfig) -> String {
         if self.len() == 0 {
             "".to_string()
         } else {
             format!(
                 "\n{}",
                 self.iter()
-                    .map(|element| element.to_jtml(ignore_comment, indent_depth + 1))
+                    .map(|element| element.to_jtml(ignore_comment, indent_depth + 1, config))
                     .collect::<Vec<String>>()
                     .join("\n")
             )

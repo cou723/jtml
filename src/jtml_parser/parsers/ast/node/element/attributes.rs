@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use crate::html_converter::Convert;
+use crate::{formatter::FormatConfig, html_converter::Convert};
 
 pub type Attribute = (String, String);
 
@@ -9,7 +9,7 @@ impl Convert for Attribute {
         return format!("{}=\"{}\"", self.0, self.1);
     }
 
-    fn to_jtml(&self, _: bool, _indent_depth: usize) -> String {
+    fn to_jtml(&self, _: bool, _indent_depth: usize, _config: &FormatConfig) -> String {
         return format!("{}=\"{}\"", self.0, self.1);
     }
 }
@@ -25,10 +25,10 @@ impl Convert for Attributes {
         return html.join(" ");
     }
 
-    fn to_jtml(&self, ignore_comment: bool, indent_depth: usize) -> String {
+    fn to_jtml(&self, ignore_comment: bool, indent_depth: usize, config: &FormatConfig) -> String {
         let mut jtml: Vec<String> = Vec::new();
         for attribute in self {
-            jtml.push(attribute.to_jtml(ignore_comment, indent_depth));
+            jtml.push(attribute.to_jtml(ignore_comment, indent_depth, config));
         }
         return jtml.join(" ");
     }
